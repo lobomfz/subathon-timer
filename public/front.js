@@ -5,7 +5,7 @@ var timer = 0,
 var timerDiv = document.getElementById("timer");
 
 function connect() {
-	var ws = new WebSocket("wss://api.lobomfz.com/socket");
+	var ws = new WebSocket("wss://api.lobomfz.com/timerSocket");
 	ws.onopen = function (e) {
 		console.log("Connection established");
 	};
