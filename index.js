@@ -201,9 +201,6 @@ function slConnect() {
 	);
 
 	socket.on("event", (e) => {
-		if (!message) message = ""; // handles no message on donate
-		var message = e.message[0].message;
-
 		if (e.type == "donation") {
 			var amount =
 				settings.currencies[e.message[0].currency] *
