@@ -49,6 +49,7 @@ function readSettings() {
 }
 
 function addToTimer(type, count = 1, extra) {
+	amount = settings[type] * count;
 	console.log("adding", amount, "to timer");
 	timer += amount;
 	sync = 0;
