@@ -1,4 +1,4 @@
-var endpoint = "https://api.lobomfz.com/timerApi";
+var endpoint = "https://api.lobomfz.com/timer/api";
 
 window.addEventListener("load", () => {
 	function addTime(seconds) {
@@ -113,5 +113,5 @@ window.addEventListener("load", () => {
 });
 
 function copyWidget() {
-	navigator.clipboard.writeText("https://api.lobomfz.com/timer");
+	navigator.clipboard.writeText("https://api.lobomfz.com/timer/widget.html");
 }

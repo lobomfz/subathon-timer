@@ -1,12 +1,12 @@
 {
+    "1": 80,
+    "2": 160,
+    "3": 480,
     "socket_token": "",
     "channel_name": "",
-    "tier_1_sub": 100,
-    "tier_2_sub": 200,
-    "tier_3_sub": 600,
-    "100_bits": 17,
-    "1_dollar": 17,
+    "dollar": 13,
     "seconds": 0,
+    "password": "",
     "currencies": {
         "USD": 1,
         "AUD": 0.69,
