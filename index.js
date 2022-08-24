@@ -115,8 +115,8 @@ function initializeAPI() {
 			settingsJson[2] = value * 2;
 			settings[2] = value * 2;
 
-			settingsJson[3] = value * 6;
-			settings[3] = value * 6;
+			settingsJson[3] = value * 5;
+			settings[3] = value * 5;
 
 			writeSettings();
 		} else {
