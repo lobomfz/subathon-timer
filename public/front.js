@@ -1,20 +1,24 @@
 var timer = 0,
 	readableTime,
-	set = false;
+	set = false,
+	url = "wss://api.lobomfz.com/timerSocket";
 
 var timerDiv = document.getElementById("timer");
 
 function connect() {
-	var ws = new WebSocket("wss://api.lobomfz.com/timerSocket");
+	var ws = new WebSocket(url);
 	ws.onopen = function (e) {
 		console.log("Connection established");
+		ws.send(0);
 	};
 
 	ws.onmessage = function (event) {
-		console.log("received ", event.data);
 		response = JSON.parse(event.data);
+		console.log("received ", response);
+
 		if ("time" in response) {
 			timer = response.time;
+			ws.send(1);
 			if (!set) {
 				readableTime =
 					Math.floor(timer / 3600) +
@@ -23,9 +27,8 @@ function connect() {
 					":" +
 					("0" + (timer % 60)).slice(-2);
 				timerDiv.innerHTML = readableTime;
-				document.getElementById("timerInput").value = readableTime;
-				document.getElementById("subInput").value = response.tier_1;
-				document.getElementById("dollarValue").value = response.dollar;
+				if (typeof updateForms !== "updateForms")
+					updateForms(readableTime, response);
 				set = true;
 			}
 		}

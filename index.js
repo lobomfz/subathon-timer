@@ -13,8 +13,11 @@ const wss = new WebSocket.Server({ port: portWss });
 var settings,
 	timer = 0,
 	readableTime = "0:00:00",
-	settingsJson,
-	sync = 0;
+	settings,
+	sync = false,
+	timeout = 5,
+	forceSync = 30;
+lastMessage = Date.now() / 1000;
 
 function readSettings() {
 	try {
@@ -24,22 +27,7 @@ function readSettings() {
 		process.exit();
 	}
 	try {
-		settingsJson = JSON.parse(jsonFile);
-
-		// unnecessary
-		settings = {
-			channel_name: settingsJson["channel_name"],
-			1: settingsJson["1"],
-			2: settingsJson["2"],
-			3: settingsJson["3"],
-			bits: settingsJson["dollar"] / 100,
-			dollar: settingsJson["dollar"],
-			seconds: settingsJson["seconds"],
-			currencies: settingsJson["currencies"],
-			socket_token: settingsJson["socket_token"],
-			password: settingsJson["password"],
-		};
-
+		settings = JSON.parse(jsonFile);
 		timer = settings.seconds;
 	} catch (e) {
 		console.log(e);
@@ -50,21 +38,20 @@ function readSettings() {
 
 function addToTimer(type, count = 1, extra) {
 	amount = settings[type] * count;
-	console.log("adding", amount, "to timer");
+	console.log("adding", amount, "seconds to timer");
 	timer += amount;
-	sync = 0;
+	sync = false;
 }
 
-function initializeAPI() {
+function httpApi() {
 	const app = express();
 	app.use(cors());
 	app.listen(port, () => console.log(`listening on port ${port}`));
 
-	// This will be used to adjust settings after i hate myself enough to create the frontend
 	app.post("/addTime", (req, res) => {
 		if (req.headers.password == settings.password) {
 			timer += parseInt(req.headers.seconds);
-			sync = 0;
+			sync = false;
 			console.log("Added " + req.headers.seconds + " seconds to timer");
 			res.send(
 				JSON.stringify({
@@ -80,7 +67,7 @@ function initializeAPI() {
 	app.post("/setTime", (req, res) => {
 		if (req.headers.password == settings.password) {
 			timer = parseInt(req.headers.seconds);
-			sync = 0;
+			sync = false;
 			res.send("Set timer to " + req.headers.seconds + " seconds");
 		} else {
 			res.status(403);
@@ -95,10 +82,9 @@ function initializeAPI() {
 	app.post("/setToken", (req, res) => {
 		if (req.headers.password == settings.password) {
 			settings.socket_token = req.headers.sltoken;
-			settingsJson.socket_token = req.headers.sltoken;
 			socket.disconnect();
 			writeSettings();
-			slConnect();
+			connectStreamlabs();
 		} else {
 			res.status(403);
 			res.send(JSON.stringify({ error: "invalid password" }));
@@ -108,28 +94,22 @@ function initializeAPI() {
 	app.post("/setSubTime", (req, res) => {
 		if (req.headers.password == settings.password) {
 			value = parseInt(req.headers.value);
-
-			settingsJson[1] = value;
 			settings[1] = value;
-
-			settingsJson[2] = value * 2;
 			settings[2] = value * 2;
-
-			settingsJson[3] = value * 5;
 			settings[3] = value * 5;
-
 			writeSettings();
 		} else {
 			res.status(403);
 			res.send(JSON.stringify({ error: "invalid password" }));
 		}
 	});
+
 	app.post("/setDollarValue", (req, res) => {
 		console.log(req.headers.password);
 		if (req.headers.password == settings.password) {
 			value = parseInt(req.headers.value);
 			settings.bits = value / 100;
-			settingsJson.dollar = value;
+			settings.dollar = value;
 			settings.dollar = value;
 			writeSettings();
 		} else {
@@ -139,7 +119,7 @@ function initializeAPI() {
 	});
 }
 
-function eventListener() {
+function startTMI() {
 	const client = new tmi.Client({
 		connection: {
 			reconnect: true,
@@ -181,17 +161,15 @@ function eventListener() {
 }
 
 async function writeSettings() {
-	settingsJson.seconds = timer;
+	settings.seconds = timer;
 	await fs.promises.writeFile(
 		"./settings.json",
-		JSON.stringify(settingsJson, null, 4),
+		JSON.stringify(settings, null, 4),
 		"UTF-8"
 	);
-	readSettings();
 }
 
-function slConnect() {
-	console.log(`https://sockets.streamlabs.com?token=${settings.socket_token}`);
+function connectStreamlabs() {
 	socket = io.connect(
 		`https://sockets.streamlabs.com?token=${settings.socket_token}`,
 		{
@@ -201,15 +179,16 @@ function slConnect() {
 	);
 
 	socket.on("event", (e) => {
+		console.log(new Date(), "\n", e);
 		if (e.type == "donation") {
 			var amount =
 				settings.currencies[e.message[0].currency] *
 				e.message[0].amount *
 				settings.dollar;
-			console.log("adding ", amount, "to timer");
+			console.log("adding", amount, "seconds to timer");
 			timer += amount;
 
-			sync = 0;
+			sync = false;
 		}
 	});
 }
@@ -224,45 +203,55 @@ function lowerTimer() {
 			("0" + (Math.floor(timer / 60) % 60)).slice(-2) +
 			":" +
 			("0" + (timer % 60)).slice(-2);
-		console.log(readableTime);
 	}
 }
 
+function connectFront() {
+	wss.on("connection", (ws) => {
+		async function syncTimer() {
+			now = Date.now() / 1000;
+			if (now - lastMessage < timeout) return 0;
+			lastMessage = now;
+			console.log(new Date(), "- syncing:", readableTime);
+			ws.send(
+				JSON.stringify({
+					time: timer,
+					tier_1: settings[1],
+					dollar: settings.dollar,
+				})
+			);
+		}
+
+		setInterval(() => {
+			if (!sync) syncTimer();
+		}, 2000);
+
+		// force sync every n seconds
+		setInterval(() => {
+			syncTimer();
+		}, forceSync * 1000);
+
+		ws.onmessage = function (event) {
+			console.log(event.data);
+			if (event.data == 1) sync = true;
+			else sync = false;
+			console.log(new Date(), "- synced:", readableTime);
+		};
+	});
+}
 function main() {
 	readSettings();
 
 	setInterval(lowerTimer, 1000);
-	writeSettings();
 	setInterval(writeSettings, 10 * 1000);
 
-	initializeAPI();
+	httpApi();
 
-	eventListener();
-	slConnect();
+	// twitch listeners
+	startTMI();
+	connectStreamlabs();
 
-	wss.on("connection", (ws) => {
-		ws.send(
-			JSON.stringify({
-				time: timer,
-				tier_1: settings[1],
-				dollar: settings.dollar,
-			})
-		);
-
-		setInterval(() => {
-			if (sync == 0) {
-				console.log("syncing time: ", timer);
-				ws.send(JSON.stringify({ time: timer }));
-				sync = 1;
-			}
-		}, 1000);
-
-		setInterval(() => {
-			console.log("syncing time: ", timer);
-			ws.send(JSON.stringify({ time: timer }));
-			sync = 1;
-		}, 10 * 1000);
-	});
+	connectFront();
 }
 
 main();

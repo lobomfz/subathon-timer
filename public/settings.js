@@ -1,6 +1,11 @@
 var endpoint = "https://api.lobomfz.com";
 
 window.addEventListener("load", () => {
+	function updateForms(readableTime, response) {
+		document.getElementById("timerInput").value = readableTime;
+		document.getElementById("subInput").value = response.tier_1;
+		document.getElementById("dollarValue").value = response.dollar;
+	}
 	function addTime(seconds) {
 		fetch(endpoint + "/addTime", {
 			method: "POST",
