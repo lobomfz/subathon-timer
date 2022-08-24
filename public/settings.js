@@ -1,4 +1,4 @@
-var endpoint = "https://api.lobomfz.com/timerApi";
+var endpoint = "https://api.lobomfz.com";
 
 window.addEventListener("load", () => {
 	function addTime(seconds) {
@@ -20,16 +20,16 @@ window.addEventListener("load", () => {
 		});
 	}
 
-	function setTime(seconds) {
+	function setTime(value) {
 		fetch(endpoint + "/setTime", {
 			method: "POST",
 			headers: {
 				password: document.getElementById("apiPassword").value,
-				seconds: seconds,
+				seconds: value,
 			},
 		}).then((res) => {
 			if (res.status == 200) {
-				timer = seconds;
+				timer = value;
 			} else {
 				res.json().then((data) => {
 					alert(data.error);
@@ -90,15 +90,9 @@ window.addEventListener("load", () => {
 			parseInt(+timeInput[0] * 60 * 60 + +timeInput[1] * 60 + +timeInput[2])
 		);
 	});
-
 	document.getElementById("slToken").addEventListener("submit", (event) => {
 		event.preventDefault();
 		setSlToken(document.getElementById("slTokenInput").value);
-	});
-
-	document.getElementById("subValue").addEventListener("submit", (event) => {
-		event.preventDefault();
-		setSubTime(document.getElementById("subInput").value);
 	});
 
 	document.getElementById("subValue").addEventListener("submit", (event) => {
@@ -113,5 +107,5 @@ window.addEventListener("load", () => {
 });
 
 function copyWidget() {
-	navigator.clipboard.writeText("https://api.lobomfz.com/timer/widget.html");
+	navigator.clipboard.writeText("https://api.lobomfz.com/widget.html");
 }
