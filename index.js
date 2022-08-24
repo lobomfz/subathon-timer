@@ -256,6 +256,12 @@ function main() {
 				sync = 1;
 			}
 		}, 1000);
+
+		setInterval(() => {
+			console.log("syncing time: ", timer);
+			ws.send(JSON.stringify({ time: timer }));
+			sync = 1;
+		}, 10 * 1000);
 	});
 }
 
