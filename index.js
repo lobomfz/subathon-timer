@@ -163,7 +163,7 @@ function eventListener() {
 	});
 
 	client.on("cheer", (channel, userstate, message) => {
-		addToTimer("bits", parseInt(userstate["bits"]));
+		addToTimer("bits", parseFloat(userstate["bits"]));
 	});
 
 	client.on(
