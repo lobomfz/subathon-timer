@@ -204,7 +204,7 @@ function slConnect() {
 		var message = e.message[0].message;
 
 		if (e.type == "donation") {
-			amount =
+			var amount =
 				settings.currencies[e.message[0].currency] *
 				e.message[0].amount *
 				settings.dollar;
