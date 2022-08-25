@@ -3,13 +3,19 @@ const fs = require("fs");
 const WebSocket = require("ws");
 const io = require("socket.io-client");
 const axios = require("axios");
+const database = require("./db");
 
-var socket;
 const port = 3001;
 const portWss = 3003;
 const wss = new WebSocket.Server({ port: portWss });
 const client_id = "3qy8w6q7u5u7wamjmggmykmrv3wjj9";
 var db = {};
+
+const defaultValues = {
+	sub: 60,
+	dollar: 15,
+	pushFrequency: 10,
+};
 
 var settings,
 	timer = 0,
@@ -73,20 +79,16 @@ function connectStreamlabs(ws) {
 		ws.socket.disconnect();
 	}
 
-	ws.socket = io.connect(
-		`https://sockets.streamlabs.com?token=${ws.streamlabsToken}`,
-		{
-			reconnect: true,
-			transports: ["websocket"],
-		}
-	);
+	ws.socket = io.connect(`https://sockets.streamlabs.com?token=${ws.slToken}`, {
+		reconnect: true,
+		transports: ["websocket"],
+	});
 
 	ws.socket.on("event", (e) => {
 		if (e.type == "donation") {
 			var amount = 1 * e.message[0].amount * ws.dollar;
 			console.log(`adding ${amount} to ${ws.name}`);
-			ws.timer += amount;
-			syncTimer(ws);
+			addToTimer(ws, amount);
 		}
 	});
 }
@@ -115,45 +117,60 @@ async function syncTimer(ws) {
 }
 
 async function login(ws, data) {
-	ws.access_token = data.access_token;
-	axios
-		.get(`https://api.twitch.tv/helix/users`, {
-			headers: {
-				Authorization: `Bearer ${ws.access_token}`,
-				"Client-Id": client_id,
-			},
-		})
-		.then((res) => {
-			append = {
-				name: res.data.data[0].login,
-				initialized: true,
-				id: res.data.data[0].id,
-			};
-			Object.assign(ws, append);
-			if (!db[ws.name]) db[ws.name] = ws;
-			getSettings(ws);
-			setInterval(() => {
-				pushToDb(ws);
-			}, 30 * 1000);
-			startTMI(ws);
-		})
-		.catch(function (error) {
-			sendError(ws, "failed to login");
-		});
-}
+	database.Users.findByPk(data.accessToken).then((res) => {
+		if (!res) {
+			axios
+				.get(`https://api.twitch.tv/helix/users`, {
+					headers: {
+						Authorization: `Bearer ${data.accessToken}`,
+						"Client-Id": client_id,
+					},
+				})
+				.then((res) => {
+					console.log();
+					newUser = {
+						userId: res.data.data[0].id,
+						name: res.data.data[0].login,
+						accessToken: data.accessToken,
+						sub: defaultValues.sub,
+						dollar: defaultValues.dollar,
+						timer: 0,
+					};
 
-async function getSettings(ws) {
-	if (db[ws.name]) {
-		ws.timer = db[ws.name].timer || 0;
-		ws.sub = db[ws.name].sub || 60;
-		ws.dollar = db[ws.name].dollar || 12;
-		ws.streamlabsToken = db[ws.name].streamlabsToken || null;
-	}
-	if (ws.streamlabsToken) connectStreamlabs(ws);
+					console.log(ws.accessToken);
+					Object.assign(ws, newUser);
+					database.createUser(newUser);
+					ws.initialized = true;
+					startTMI(ws);
+				})
+				.catch(function (error) {
+					sendError(ws, "failed to login" + error);
+					return 0;
+				});
+		} else {
+			console.log("loaded user", res.dataValues.name);
+			ws.initialized = true;
+			Object.assign(ws, res.dataValues);
+		}
+	});
 }
 
 async function pushToDb(ws) {
-	db[ws.name] = ws;
+	database.Users.update(
+		{
+			name: ws.name,
+			accessToken: ws.accessToken,
+			sub: ws.sub,
+			dollar: ws.dollar,
+			slToken: ws.slToken,
+			timer: ws.timer,
+		},
+		{
+			where: {
+				accessToken: ws.accessToken,
+			},
+		}
+	);
 }
 
 async function sendError(ws, message) {
@@ -185,13 +202,15 @@ function main() {
 			switch (data.event) {
 				case "login":
 					login(ws, data);
+					setInterval(() => pushToDb(ws), defaultValues.pushFrequency * 1000);
 					break;
 				case "connectStreamlabs":
 					if (!ws.initialized) {
 						sendError(ws, "not initialized");
 						return 0;
 					}
-					ws.streamlabsToken = data.streamlabs_token;
+					ws.slToken = data.slToken;
+					pushToDb(ws);
 					connectStreamlabs(ws);
 					break;
 				case "getTime":
@@ -207,6 +226,7 @@ function main() {
 						return 0;
 					}
 					ws[data.setting] = data.value;
+					pushToDb(ws);
 			}
 		};
 	});
