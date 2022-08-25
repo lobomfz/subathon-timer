@@ -12,10 +12,11 @@
         "pkg": "^5.8.0"
     },
     "dependencies": {
+        "axios": "^0.27.2",
         "cors": "^2.8.5",
         "express": "^4.18.1",
+        "socket.io-client": "^2.5.0",
         "tmi.js": "^1.8.5",
-        "ws": "^8.8.1",
-        "socket.io-client": "^2.5.0"
+        "ws": "^8.8.1"
     }
 }
