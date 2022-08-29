@@ -18,6 +18,7 @@ const Users = sequelize.define("User", {
 	userId: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
+		primaryKey: true,
 	},
 	name: {
 		type: DataTypes.STRING,
@@ -26,7 +27,6 @@ const Users = sequelize.define("User", {
 	accessToken: {
 		type: DataTypes.STRING,
 		allowNull: false,
-		primaryKey: true,
 	},
 	sub: {
 		type: DataTypes.INTEGER,

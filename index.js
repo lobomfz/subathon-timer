@@ -117,20 +117,23 @@ async function syncTimer(ws) {
 }
 
 async function login(ws, data) {
-	database.Users.findByPk(data.accessToken).then((res) => {
-		if (!res) {
-			axios
-				.get(`https://api.twitch.tv/helix/users`, {
-					headers: {
-						Authorization: `Bearer ${data.accessToken}`,
-						"Client-Id": client_id,
-					},
-				})
-				.then((res) => {
+	axios
+		.get(`https://api.twitch.tv/helix/users`, {
+			headers: {
+				Authorization: `Bearer ${data.accessToken}`,
+				"Client-Id": client_id,
+			},
+		})
+		.then((httpRes) => {
+			ws.userId = httpRes.data.data[0].id;
+			ws.name = httpRes.data.data[0].login;
+
+			database.Users.findByPk(ws.userId).then((res) => {
+				if (!res) {
 					console.log();
 					newUser = {
-						userId: res.data.data[0].id,
-						name: res.data.data[0].login,
+						userId: ws.userId,
+						name: ws.name,
 						accessToken: data.accessToken,
 						sub: defaultValues.sub,
 						dollar: defaultValues.dollar,
@@ -142,17 +145,17 @@ async function login(ws, data) {
 					database.createUser(newUser);
 					ws.initialized = true;
 					startTMI(ws);
-				})
-				.catch(function (error) {
-					sendError(ws, "failed to login" + error);
-					return 0;
-				});
-		} else {
-			console.log("loaded user", res.dataValues.name);
-			ws.initialized = true;
-			Object.assign(ws, res.dataValues);
-		}
-	});
+				} else {
+					console.log("loaded user", res.dataValues.name);
+					ws.initialized = true;
+					Object.assign(ws, res.dataValues);
+				}
+			});
+		})
+		.catch(function (error) {
+			sendError(ws, "failed to login" + error);
+			return 0;
+		});
 }
 
 async function pushToDb(ws) {
@@ -167,7 +170,7 @@ async function pushToDb(ws) {
 		},
 		{
 			where: {
-				accessToken: ws.accessToken,
+				userId: ws.userId,
 			},
 		}
 	);
