@@ -116,7 +116,7 @@ async function syncTimer(ws) {
 			time: parseInt(ws.timer),
 			sub: ws.sub,
 			dollar: ws.dollar,
-			slStatus: ws.socket.io.readyState,
+			slStatus: ws.hasOwnProperty("io") ? ws.socket.io.readyState : false,
 		})
 	);
 }
