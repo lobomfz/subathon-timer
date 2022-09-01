@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { setSetting, connectSl } from "./Api";
 
 const URL = "ws://localhost:3003";
 let ws: WebSocket;
@@ -15,10 +16,9 @@ const Timer: React.FC = () => {
 
 	const connectWs = () => {
 		ws = new WebSocket(URL);
-
+		console.log(typeof ws);
 		ws.onopen = (event) => {
 			console.log("websocket connection established");
-
 			if (token)
 				ws.send(
 					JSON.stringify({

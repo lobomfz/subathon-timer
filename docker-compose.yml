@@ -10,13 +10,25 @@ services:
     restart: always
     depends_on:
       - postgres
-    build: ./
+    build:
+      context: .
+      dockerfile: Dockerfile_back
     ports:
       - "3003:3003"
     networks:
       - web
     volumes:
       - ./back/src:/home/node/app/src
+  react:
+    network_mode: "host"
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile_front
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./front/src:/home/node/app/src
 
 networks:
   web:

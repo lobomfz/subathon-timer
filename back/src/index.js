@@ -74,17 +74,20 @@ function startTMI(ws) {
 }
 
 function connectStreamlabs(ws) {
-	if (ws.socket) {
-		ws.socket.disconnect();
-		ws.slStatus = false;
-	}
+	if (ws.socket) ws.socket.disconnect();
 
 	ws.socket = io.connect(`https://sockets.streamlabs.com?token=${ws.slToken}`, {
 		reconnect: true,
 		transports: ["websocket"],
 	});
+
 	ws.socket.on("connect", () => {
+		ws.slStatus = true;
 		syncTimer(ws);
+	});
+
+	ws.socket.on("disconnect", () => {
+		ws.slStatus = false;
 	});
 
 	ws.socket.on("event", (e) => {
@@ -116,9 +119,10 @@ async function syncTimer(ws) {
 			time: parseInt(ws.timer),
 			sub: ws.sub,
 			dollar: ws.dollar,
-			slStatus: ws.hasOwnProperty("io") ? ws.socket.io.readyState : false,
+			slStatus: ws.slStatus,
 		})
 	);
+	pushToDb(ws);
 }
 
 async function login(ws, data) {
@@ -153,6 +157,7 @@ async function login(ws, data) {
 				} else {
 					console.log("loaded user", res.dataValues.name);
 					ws.initialized = true;
+					console.log(ws.slToken);
 					Object.assign(ws, res.dataValues);
 					if (ws.slToken) connectStreamlabs(ws);
 					else syncTimer(ws);
@@ -193,6 +198,8 @@ async function sendError(ws, message) {
 
 function main() {
 	wss.on("connection", (ws) => {
+		ws.initialized == false;
+		ws.slStatus = false;
 		setInterval(() => {
 			lowerTimer(ws);
 		}, 1000);
@@ -205,32 +212,32 @@ function main() {
 				return 0;
 			}
 
+			if (!data.accessToken) {
+				sendError(ws, "Invalid Authentication.");
+				return 0;
+			}
+
+			ws.accessToken = data.accessToken;
+
+			if (data.event !== "login" && ws.initialized == false) {
+				sendError(ws, "Not logged in.");
+				return 0;
+			}
+
 			switch (data.event) {
 				case "login":
 					login(ws, data);
 					setInterval(() => pushToDb(ws), defaultValues.pushFrequency * 1000);
 					break;
 				case "connectStreamlabs":
-					if (!ws.initialized) {
-						sendError(ws, "not initialized");
-						return 0;
-					}
 					ws.slToken = data.slToken;
 					pushToDb(ws);
 					connectStreamlabs(ws);
 					break;
 				case "getTime":
-					if (!ws.initialized) {
-						sendError(ws, "not initialized");
-						return 0;
-					}
 					syncTimer(ws);
 					break;
 				case "setSetting":
-					if (!ws.initialized) {
-						sendError(ws, "not initialized");
-						return 0;
-					}
 					ws[data.setting] = data.value;
 					pushToDb(ws);
 			}
