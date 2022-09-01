@@ -16,7 +16,6 @@ const Timer: React.FC = () => {
 
 	const connectWs = () => {
 		ws = new WebSocket(URL);
-		console.log(typeof ws);
 		ws.onopen = (event) => {
 			console.log("websocket connection established");
 			if (token)
@@ -83,7 +82,7 @@ const Timer: React.FC = () => {
 
 	return (
 		<div
-			className="Timer"
+			className='Timer'
 			style={{
 				color: "black",
 				fontFamily: "Roboto, sans-serif",

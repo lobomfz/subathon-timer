@@ -46,30 +46,41 @@ function startTMI(ws) {
 		(channel, username, streakMonths, recipient, methods, userstate) => {
 			var plan = userstate["msg-param-sub-plan"];
 			var tier = plan == "Prime" ? 1 : plan / 1000;
-			// addToTimer(, ws);
+			var amount = tier * ws.sub;
+			console.log(`adding ${amount} to ${ws.name}`);
+			addToTimer(ws, amount);
 		}
 	);
 
 	client.on("anongiftpaidupgrade", (channel, username, userstate) => {
 		var plan = userstate["msg-param-sub-plan"];
-		addToTimer(plan == "Prime" ? 1 : plan / 1000, ws);
+		var tier = plan == "Prime" ? 1 : plan / 1000;
+		var amount = tier * ws.sub;
+		console.log(`adding ${amount} to ${ws.name}`);
+		addToTimer(ws, amount);
 	});
 
 	client.on("cheer", (channel, userstate, message) => {
-		addToTimer("bits", parseFloat(userstate["bits"]), ws);
+		addToTimer(ws, (userstate["bits"] / 100) * ws.dollar);
 	});
 
 	client.on(
 		"resub",
 		(channel, username, months, message, userstate, methods) => {
 			var plan = userstate["msg-param-sub-plan"];
-			addToTimer(plan == "Prime" ? 1 : plan / 1000, ws);
+			var tier = plan == "Prime" ? 1 : plan / 1000;
+			var amount = tier * ws.sub;
+			console.log(`adding ${amount} to ${ws.name}`);
+			addToTimer(ws, amount);
 		}
 	);
 
 	client.on("subscription", (channel, username, method, message, userstate) => {
 		var plan = userstate["msg-param-sub-plan"];
-		addToTimer(plan == "Prime" ? 1 : plan, ws);
+		var tier = plan == "Prime" ? 1 : plan / 1000;
+		var amount = tier * ws.sub;
+		console.log(`adding ${amount} to ${ws.name}`);
+		addToTimer(ws, amount);
 	});
 }
 
@@ -161,6 +172,7 @@ async function login(ws, data) {
 					Object.assign(ws, res.dataValues);
 					if (ws.slToken) connectStreamlabs(ws);
 					else syncTimer(ws);
+					startTMI(ws);
 				}
 			});
 		})

@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from "react";
 
-import Timer from './Timer';
+import Timer from "./Timer";
 
 const App: React.FC = () => {
-  return (
-    <Timer />
-  )
-}
+	return <Timer />;
+};
 
 export default App;
