@@ -208,6 +208,25 @@ async function sendError(ws, message) {
 	);
 }
 
+async function validateUser(ws, data) {
+	axios
+		.get(`https://api.twitch.tv/helix/users`, {
+			headers: {
+				Authorization: `Bearer ${data.accessToken}`,
+				"Client-Id": client_id,
+			},
+		})
+		.then((httpRes) => {
+			if (httpRes.data.data[0].id == ws.userId) return true;
+			sendError(ws, "invalid token");
+			return false;
+		})
+		.catch(function (error) {
+			sendError(ws, "invalid token");
+			return false;
+		});
+}
+
 function main() {
 	wss.on("connection", (ws) => {
 		ws.initialized == false;
@@ -231,28 +250,39 @@ function main() {
 
 			ws.accessToken = data.accessToken;
 
-			if (data.event !== "login" && ws.initialized == false) {
+			if (data.event == "login") {
+				login(ws, data);
+				setInterval(() => pushToDb(ws), defaultValues.pushFrequency * 1000);
+				return 0;
+			}
+
+			if (ws.initialized == false) {
 				sendError(ws, "Not logged in.");
 				return 0;
 			}
 
-			switch (data.event) {
-				case "login":
-					login(ws, data);
-					setInterval(() => pushToDb(ws), defaultValues.pushFrequency * 1000);
-					break;
-				case "connectStreamlabs":
-					ws.slToken = data.slToken;
-					pushToDb(ws);
-					connectStreamlabs(ws);
-					break;
-				case "getTime":
-					syncTimer(ws);
-					break;
-				case "setSetting":
-					ws[data.setting] = data.value;
-					pushToDb(ws);
-			}
+			validateUser(ws, data).then((res) => {
+				if (res) {
+					switch (data.event) {
+						case "getTime":
+							syncTimer(ws);
+							break;
+						case "connectStreamlabs":
+							ws.slToken = data.slToken;
+							pushToDb(ws);
+							connectStreamlabs(ws);
+							break;
+						case "setSetting":
+							ws[data.setting] = data.value;
+							pushToDb(ws);
+							break;
+						case "setTime":
+							ws.timer = data.value;
+							pushToDb(ws);
+							break;
+					}
+				}
+			});
 		};
 	});
 }

@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from "react";
+import { setSetting, connectSl } from "../Api";
+import {
+	NumberInput,
+	NumberInputField,
+	NumberInputStepper,
+	NumberIncrementStepper,
+	NumberDecrementStepper,
+} from "@chakra-ui/react";
 
 const URL = "ws://localhost:3003";
 let ws: WebSocket;
 
-const Timer: React.FC<{ token: string }> = ({ token }) => {
+const Settings: React.FC = () => {
 	const [seconds, setSeconds] = useState(0);
 	const [fetched, setFetched] = useState(false);
+	const token = new URLSearchParams(window.location.search).get("token");
 
 	const updateSeconds = (endTime: number) =>
 		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
@@ -77,18 +86,29 @@ const Timer: React.FC<{ token: string }> = ({ token }) => {
 	).slice(-2)}:${("0" + (seconds % 60)).slice(-2)}`;
 
 	return (
-		<div
-			className="Timer"
-			style={{
-				color: "black",
-				fontFamily: "Roboto, sans-serif",
-				fontSize: "128px",
-				fontWeight: 400,
-			}}
-		>
-			{timer}
+		<div>
+			<div
+				className="Timer"
+				style={{
+					color: "black",
+					fontFamily: "Roboto, sans-serif",
+					fontSize: "64px",
+					fontWeight: 400,
+					textAlign: "center",
+				}}
+			>
+				{timer}
+			</div>
+			<div
+				id="settings"
+				style={{
+					margin: "auto",
+				}}
+				// add the actual settings here, may need to adjust backend to accept all settings at once (use one "save settings" button)
+				// and a copy widget link button
+			></div>
 		</div>
 	);
 };
 
-export default Timer;
+export default Settings;
