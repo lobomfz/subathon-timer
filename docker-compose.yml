@@ -1,0 +1,23 @@
+version: "3.0"
+services:
+  postgres:
+    image: postgres:14.5-alpine
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    networks:
+      - web
+  node:
+    restart: always
+    depends_on:
+      - postgres
+    build: ./
+    ports:
+      - "3003:3003"
+    networks:
+      - web
+    volumes:
+      - ./back/src:/home/node/app/src
+
+networks:
+  web:
+    driver: bridge

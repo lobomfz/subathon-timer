@@ -9,12 +9,11 @@ const port = 3001;
 const portWss = 3003;
 const wss = new WebSocket.Server({ port: portWss });
 const client_id = "3qy8w6q7u5u7wamjmggmykmrv3wjj9";
-var db = {};
 
 const defaultValues = {
 	sub: 60,
 	dollar: 15,
-	pushFrequency: 10,
+	pushFrequency: 5,
 };
 
 var settings,
@@ -77,11 +76,15 @@ function startTMI(ws) {
 function connectStreamlabs(ws) {
 	if (ws.socket) {
 		ws.socket.disconnect();
+		ws.slStatus = false;
 	}
 
 	ws.socket = io.connect(`https://sockets.streamlabs.com?token=${ws.slToken}`, {
 		reconnect: true,
 		transports: ["websocket"],
+	});
+	ws.socket.on("connect", () => {
+		syncTimer(ws);
 	});
 
 	ws.socket.on("event", (e) => {
@@ -109,9 +112,11 @@ async function syncTimer(ws) {
 	if (!Number.isInteger(ws.timer)) ws.timer = 0;
 	ws.send(
 		JSON.stringify({
+			endTime: parseInt(new Date().getTime() / 1000 + ws.timer),
 			time: parseInt(ws.timer),
 			sub: ws.sub,
 			dollar: ws.dollar,
+			slStatus: ws.socket.io.readyState,
 		})
 	);
 }
@@ -149,6 +154,8 @@ async function login(ws, data) {
 					console.log("loaded user", res.dataValues.name);
 					ws.initialized = true;
 					Object.assign(ws, res.dataValues);
+					if (ws.slToken) connectStreamlabs(ws);
+					else syncTimer(ws);
 				}
 			});
 		})
@@ -194,11 +201,7 @@ function main() {
 			try {
 				data = JSON.parse(event.data);
 			} catch (error) {
-				ws.send(
-					JSON.stringify({
-						error: "json error",
-					})
-				);
+				sendError(ws, "json error");
 				return 0;
 			}
 
