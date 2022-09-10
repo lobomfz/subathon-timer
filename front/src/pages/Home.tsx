@@ -3,7 +3,6 @@ import * as consts from "../Consts";
 import { Button, ButtonGroup } from "@chakra-ui/react";
 
 const Home: React.FC = () => {
-	// please make this look good
 	return (
 		<div
 			style={{

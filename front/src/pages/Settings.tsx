@@ -1,38 +1,18 @@
 import React, { useEffect, useState } from "react";
 import ConnectivitySettings from "./Settings/Connectivity";
+import Timer from "../Timer";
+import * as consts from "../Consts";
 
-const URL = "ws://localhost:3003";
+const URL = consts.URL;
 let ws: WebSocket;
 
 const Settings: React.FC = () => {
-	const [seconds, setSeconds] = useState(0);
-	const [fetched, setFetched] = useState(false);
-	const [slToken, setSlToken] = useState("");
+	const [currentPage, setCurrentPage] = useState("Connectivity");
+
 	const token = new URLSearchParams(window.location.search).get("token");
+
 	const connectWs = () => {
 		ws = new WebSocket(`${URL}?token=${token}`);
-		ws.onopen = (event) => {
-			console.log("websocket connection established");
-		};
-
-		ws.onmessage = (event) => {
-			const response = JSON.parse(event.data);
-			console.log(`received ${event.data}`);
-
-			if ("time" in response) {
-				const time =
-					typeof response.time === "number"
-						? response.time
-						: parseInt(response.time);
-				setSeconds(time);
-
-				if (!fetched) {
-					setFetched(true);
-				}
-			} else if ("error" in response) {
-				console.log(`error: ${response.data}`);
-			}
-		};
 
 		ws.onclose = (event) => {
 			console.log(
@@ -47,45 +27,23 @@ const Settings: React.FC = () => {
 		};
 	};
 
-	useEffect(() => {
-		connectWs();
-		return () => ws.close();
-	}, []);
+	connectWs();
 
-	useEffect(() => {
-		const interval = setInterval(() => {
-			if (seconds > 0) {
-				setSeconds((prev) => prev - 1);
-			}
-		}, 1000);
-		return () => {
-			clearInterval(interval);
-		};
-	}, [fetched]);
-
-	const timer = `${Math.floor(seconds / 3600)}:${(
-		"0" +
-		(Math.floor(seconds / 60) % 60)
-	).slice(-2)}:${("0" + (seconds % 60)).slice(-2)}`;
+	switch (currentPage) {
+		case "Connectivity":
+			return (
+				<div>
+					<Timer ws={ws} textAlign='center' />
+					<br />
+					<ConnectivitySettings ws={ws} />
+				</div>
+			);
+			break;
+	}
 
 	return (
 		<div>
-			<div
-				className='Timer'
-				style={{
-					color: "black",
-					fontFamily: "Roboto, sans-serif",
-					fontSize: "64px",
-					fontWeight: 400,
-					textAlign: "center",
-				}}
-			>
-				{timer}
-			</div>
-			<br />
-			<br />
-			<ConnectivitySettings ws={ws} />
-			''
+			<Timer ws={ws} textAlign='center' />
 		</div>
 	);
 };

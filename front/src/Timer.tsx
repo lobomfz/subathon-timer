@@ -1,64 +1,30 @@
 import React, { useEffect, useState } from "react";
 
-const URL = "ws://localhost:3003";
-let ws: WebSocket;
-
-const Timer: React.FC<{ token: string }> = ({ token }) => {
+const Timer: React.FC<{ ws: WebSocket; textAlign: any }> = ({
+	ws,
+	textAlign = "center",
+}) => {
 	const [seconds, setSeconds] = useState(0);
 	const [fetched, setFetched] = useState(false);
 
-	const updateSeconds = (endTime: number) =>
-		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
+	ws.onmessage = (event: any) => {
+		const response = JSON.parse(event.data);
+		console.log(`received ${event.data}`);
 
-	const connectWs = () => {
-		ws = new WebSocket(URL);
-		ws.onopen = (event) => {
-			console.log("websocket connection established");
-			if (token)
-				ws.send(
-					JSON.stringify({
-						event: "login",
-						accessToken: token,
-					})
-				);
-		};
+		if ("time" in response) {
+			const time =
+				typeof response.time === "number"
+					? response.time
+					: parseInt(response.time);
+			setSeconds(time);
 
-		ws.onmessage = (event) => {
-			const response = JSON.parse(event.data);
-			console.log(`received ${event.data}`);
-
-			if ("time" in response) {
-				const endTime =
-					typeof response.endTime === "number"
-						? response.endTime
-						: parseInt(response.endTime);
-				updateSeconds(endTime);
-
-				if (!fetched) {
-					setFetched(true);
-				}
-			} else if ("error" in response) {
-				console.log(`error: ${response.data}`);
+			if (!fetched) {
+				setFetched(true);
 			}
-		};
-
-		ws.onclose = (event) => {
-			console.log(
-				`socket closed, attempting reconnect in 5 seconds... (${event.reason})`
-			);
-			setTimeout(connectWs, 5000);
-		};
-
-		ws.onerror = (event) => {
-			console.error(`socket encountered error: ${event} - closing socket`);
-			ws.close();
-		};
+		} else if ("error" in response) {
+			console.log(`error: ${response.data}`);
+		}
 	};
-
-	useEffect(() => {
-		connectWs();
-		return () => ws.close();
-	}, []);
 
 	useEffect(() => {
 		const interval = setInterval(() => {
@@ -84,6 +50,7 @@ const Timer: React.FC<{ token: string }> = ({ token }) => {
 				fontFamily: "Roboto, sans-serif",
 				fontSize: "128px",
 				fontWeight: 400,
+				textAlign: textAlign,
 			}}
 		>
 			{timer}

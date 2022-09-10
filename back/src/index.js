@@ -5,6 +5,7 @@ const io = require("socket.io-client");
 const axios = require("axios");
 const database = require("./db");
 const url = require("url");
+const { clearInterval } = require("timers");
 
 const port = 3001;
 const portWss = 3003;
@@ -17,13 +18,7 @@ const defaultValues = {
 	pushFrequency: 5,
 };
 
-var settings,
-	timer = 0,
-	readableTime = "0:00:00",
-	settings,
-	sync = false,
-	timeout = 5,
-	forceSync = 30;
+var forceSync = 5;
 
 function addToTimer(ws, seconds) {
 	amount = parseInt(seconds) || 0;
@@ -32,7 +27,7 @@ function addToTimer(ws, seconds) {
 }
 
 function startTMI(ws) {
-	console.log("connecting to", ws.name);
+	console.log(`Connecting to ${ws.name} tmi`);
 	const client = new tmi.Client({
 		connection: {
 			reconnect: true,
@@ -112,15 +107,7 @@ function connectStreamlabs(ws) {
 }
 
 function lowerTimer(ws) {
-	if (ws.timer > 0) {
-		ws.timer -= 1;
-		ws.readableTime =
-			Math.floor(timer / 3600) +
-			":" +
-			("0" + (Math.floor(timer / 60) % 60)).slice(-2) +
-			":" +
-			("0" + (timer % 60)).slice(-2);
-	}
+	if (ws.timer > 0) ws.timer -= 1;
 }
 
 async function syncTimer(ws) {
@@ -225,8 +212,15 @@ async function validateUser(ws, data) {
 		});
 }
 
+function heartbeat() {
+	this.isAlive = true;
+}
+
 function main() {
 	wss.on("connection", (ws, req) => {
+		ws.isAlive = true;
+		ws.on("pong", heartbeat);
+
 		if (url.parse(req.url, true).query.token) {
 			try {
 				login(ws, url.parse(req.url, true).query.token);
@@ -236,9 +230,20 @@ function main() {
 			}
 		}
 
-		setInterval(() => {
+		timerInterval = setInterval(() => {
 			lowerTimer(ws);
 		}, 1000);
+
+		dbSync = setInterval(() => {
+			pushToDb(ws);
+		}, forceSync * 1000);
+
+		ws.on("close", () => {
+			console.log(`Disconnected from ${ws.name}`);
+			pushToDb(ws);
+			clearInterval(dbSync);
+			clearInterval(timerInterval);
+		});
 
 		ws.onmessage = function (event) {
 			try {
@@ -267,6 +272,20 @@ function main() {
 					break;
 			}
 		};
+	});
+
+	const timeout = setInterval(function ping() {
+		wss.clients.forEach(function each(ws) {
+			if (ws.isAlive === false) return ws.terminate();
+			console.log(`pinging ${ws.name}`);
+
+			ws.isAlive = false;
+			ws.ping();
+		});
+	}, 10 * 1000);
+
+	wss.on("close", function close() {
+		clearInterval(timeout);
 	});
 }
 
