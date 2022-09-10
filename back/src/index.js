@@ -16,13 +16,13 @@ const defaultValues = {
 	sub: 60,
 	dollar: 15,
 	pushFrequency: 5,
+	timeoutTime: 30,
 };
-
-var forceSync = 5;
 
 function addToTimer(ws, seconds) {
 	amount = parseInt(seconds) || 0;
 	ws.timer += amount;
+	console.log(`adding ${amount} to ${ws.name}`);
 	syncTimer(ws);
 }
 
@@ -43,7 +43,6 @@ function startTMI(ws) {
 			var plan = userstate["msg-param-sub-plan"];
 			var tier = plan == "Prime" ? 1 : plan / 1000;
 			var amount = tier * ws.sub;
-			console.log(`adding ${amount} to ${ws.name}`);
 			addToTimer(ws, amount);
 		}
 	);
@@ -52,7 +51,6 @@ function startTMI(ws) {
 		var plan = userstate["msg-param-sub-plan"];
 		var tier = plan == "Prime" ? 1 : plan / 1000;
 		var amount = tier * ws.sub;
-		console.log(`adding ${amount} to ${ws.name}`);
 		addToTimer(ws, amount);
 	});
 
@@ -66,7 +64,6 @@ function startTMI(ws) {
 			var plan = userstate["msg-param-sub-plan"];
 			var tier = plan == "Prime" ? 1 : plan / 1000;
 			var amount = tier * ws.sub;
-			console.log(`adding ${amount} to ${ws.name}`);
 			addToTimer(ws, amount);
 		}
 	);
@@ -75,7 +72,6 @@ function startTMI(ws) {
 		var plan = userstate["msg-param-sub-plan"];
 		var tier = plan == "Prime" ? 1 : plan / 1000;
 		var amount = tier * ws.sub;
-		console.log(`adding ${amount} to ${ws.name}`);
 		addToTimer(ws, amount);
 	});
 }
@@ -100,7 +96,6 @@ function connectStreamlabs(ws) {
 	ws.socket.on("event", (e) => {
 		if (e.type == "donation") {
 			var amount = 1 * e.message[0].amount * ws.dollar;
-			console.log(`adding ${amount} to ${ws.name}`);
 			addToTimer(ws, amount);
 		}
 	});
@@ -115,6 +110,7 @@ async function syncTimer(ws) {
 	if (!ws.slStatus) ws.sl;
 	ws.send(
 		JSON.stringify({
+			success: true,
 			time: parseInt(ws.timer),
 			sub: ws.sub,
 			dollar: ws.dollar,
@@ -155,7 +151,6 @@ async function login(ws, accessToken) {
 					Object.assign(ws, res.dataValues);
 					if (ws.slToken) connectStreamlabs(ws);
 					else syncTimer(ws);
-
 					startTMI(ws);
 				}
 			});
@@ -236,7 +231,7 @@ function main() {
 
 		dbSync = setInterval(() => {
 			pushToDb(ws);
-		}, forceSync * 1000);
+		}, defaultValues.pushFrequency * 1000);
 
 		ws.on("close", () => {
 			console.log(`Disconnected from ${ws.name}`);
@@ -282,7 +277,7 @@ function main() {
 			ws.isAlive = false;
 			ws.ping();
 		});
-	}, 10 * 1000);
+	}, defaultValues.timeoutTime * 1000);
 
 	wss.on("close", function close() {
 		clearInterval(timeout);
