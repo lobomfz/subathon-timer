@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { setSetting, connectSl } from "../Api";
-import {
-	NumberInput,
-	NumberInputField,
-	NumberInputStepper,
-	NumberIncrementStepper,
-	NumberDecrementStepper,
-} from "@chakra-ui/react";
+import ConnectivitySettings from "./Settings/Connectivity";
 
 const URL = "ws://localhost:3003";
 let ws: WebSocket;
@@ -14,22 +7,12 @@ let ws: WebSocket;
 const Settings: React.FC = () => {
 	const [seconds, setSeconds] = useState(0);
 	const [fetched, setFetched] = useState(false);
+	const [slToken, setSlToken] = useState('');
 	const token = new URLSearchParams(window.location.search).get("token");
-
-	const updateSeconds = (endTime: number) =>
-		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
-
 	const connectWs = () => {
-		ws = new WebSocket(URL);
+		ws = new WebSocket(`${URL}?token=${token}`);
 		ws.onopen = (event) => {
 			console.log("websocket connection established");
-			if (token)
-				ws.send(
-					JSON.stringify({
-						event: "login",
-						accessToken: token,
-					})
-				);
 		};
 
 		ws.onmessage = (event) => {
@@ -37,11 +20,11 @@ const Settings: React.FC = () => {
 			console.log(`received ${event.data}`);
 
 			if ("time" in response) {
-				const endTime =
-					typeof response.endTime === "number"
-						? response.endTime
-						: parseInt(response.endTime);
-				updateSeconds(endTime);
+				const time =
+					typeof response.time === "number"
+						? response.time
+						: parseInt(response.time);
+				setSeconds(time);
 
 				if (!fetched) {
 					setFetched(true);
@@ -99,14 +82,9 @@ const Settings: React.FC = () => {
 			>
 				{timer}
 			</div>
-			<div
-				id="settings"
-				style={{
-					margin: "auto",
-				}}
-				// add the actual settings here, may need to adjust backend to accept all settings at once (use one "save settings" button)
-				// and a copy widget link button
-			></div>
+			<br />
+			<br />
+			<ConnectivitySettings ws={ws}/>''
 		</div>
 	);
 };
