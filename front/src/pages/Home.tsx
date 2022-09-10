@@ -16,7 +16,7 @@ const Home: React.FC = () => {
 				fontSize: "64px",
 			}}
 		>
-			<Button colorScheme="purple" size="lg">
+			<Button colorScheme='purple' size='lg'>
 				<a
 					href={`https://id.twitch.tv/oauth2/authorize?client_id=${consts.client_id}&redirect_uri=${consts.redirect_uri}login&response_type=token`}
 				>

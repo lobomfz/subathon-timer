@@ -11,10 +11,10 @@ const App: React.FC = () => {
 		<Router>
 			<ChakraProvider>
 				<Routes>
-					<Route path="/" element={<Home />} />
-					<Route path="/widget" element={<Widget />} />
-					<Route path="/login" element={<Login />} />
-					<Route path="/settings" element={<Settings />} />
+					<Route path='/' element={<Home />} />
+					<Route path='/widget' element={<Widget />} />
+					<Route path='/login' element={<Login />} />
+					<Route path='/settings' element={<Settings />} />
 				</Routes>
 			</ChakraProvider>
 		</Router>

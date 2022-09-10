@@ -78,7 +78,7 @@ const Timer: React.FC<{ token: string }> = ({ token }) => {
 
 	return (
 		<div
-			className="Timer"
+			className='Timer'
 			style={{
 				color: "black",
 				fontFamily: "Roboto, sans-serif",

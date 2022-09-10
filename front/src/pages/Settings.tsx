@@ -7,7 +7,7 @@ let ws: WebSocket;
 const Settings: React.FC = () => {
 	const [seconds, setSeconds] = useState(0);
 	const [fetched, setFetched] = useState(false);
-	const [slToken, setSlToken] = useState('');
+	const [slToken, setSlToken] = useState("");
 	const token = new URLSearchParams(window.location.search).get("token");
 	const connectWs = () => {
 		ws = new WebSocket(`${URL}?token=${token}`);
@@ -71,7 +71,7 @@ const Settings: React.FC = () => {
 	return (
 		<div>
 			<div
-				className="Timer"
+				className='Timer'
 				style={{
 					color: "black",
 					fontFamily: "Roboto, sans-serif",
@@ -84,7 +84,8 @@ const Settings: React.FC = () => {
 			</div>
 			<br />
 			<br />
-			<ConnectivitySettings ws={ws}/>''
+			<ConnectivitySettings ws={ws} />
+			''
 		</div>
 	);
 };
