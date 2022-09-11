@@ -19,7 +19,7 @@ const URL = consts.URL;
 let ws: WebSocket;
 
 const Settings: React.FC = () => {
-	const [settings, setSettings] = useState({});
+	const [settings, setSettings] = useState({ slStatus: false });
 	const [seconds, setSeconds] = useState(0);
 	const [fetched, setFetched] = useState(false);
 
@@ -35,11 +35,7 @@ const Settings: React.FC = () => {
 			setSettings(response);
 
 			if ("time" in response) {
-				const time =
-					typeof response.time === "number"
-						? response.time
-						: parseInt(response.time);
-				setSeconds(time);
+				setSeconds(parseInt(response.time));
 				if (!fetched) {
 					setFetched(true);
 				}
@@ -66,7 +62,6 @@ const Settings: React.FC = () => {
 		return () => ws.close();
 	}, []);
 
-	// bug: if zero then updated it doesnt decrease on screen
 	useEffect(() => {
 		const interval = setInterval(() => {
 			if (seconds > 0) {
@@ -76,7 +71,7 @@ const Settings: React.FC = () => {
 		return () => {
 			clearInterval(interval);
 		};
-	}, [fetched]);
+	}, [fetched, seconds]);
 
 	if (fetched)
 		return (
@@ -103,7 +98,7 @@ const Settings: React.FC = () => {
 							<TimingSettings ws={ws} input_settings={settings} />
 						</TabPanel>
 						<TabPanel>
-							<ConnectivitySettings ws={ws} settings={settings} />
+							<ConnectivitySettings ws={ws} status={settings.slStatus} />
 						</TabPanel>
 						<TabPanel>
 							<ChangeTime ws={ws} />

@@ -250,7 +250,7 @@ function main() {
 					pushToDb(ws);
 					break;
 				case "setTime":
-					ws.timer = data.value;
+					ws.timer = parseInt(data.value) || 0;
 					pushToDb(ws);
 					break;
 				case "addTime":

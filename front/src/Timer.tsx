@@ -12,7 +12,7 @@ const Timer: React.FC<{
 			"0" +
 			(Math.floor(input_seconds / 60) % 60)
 		).slice(-2)}:${("0" + (input_seconds % 60)).slice(-2)}`;
-	else timer = "00:00:00";
+	else timer = "0:00:00";
 
 	return (
 		<div

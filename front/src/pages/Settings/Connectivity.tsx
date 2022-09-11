@@ -2,20 +2,20 @@ import React, { useState, useEffect } from "react";
 import { connectSl } from "../../Api";
 import { Input, Button, Grid, GridItem, Badge, Center } from "@chakra-ui/react";
 
-const ConnectivitySettings: React.FC<{ ws: any; settings?: object }> = ({
+const ConnectivitySettings: React.FC<{ ws: any; status?: boolean }> = ({
 	ws,
-	settings = {},
+	status = false,
 }) => {
 	const [slToken, setSlToken] = useState("");
 	const [slStatus, setslStatus] = useState("Not Connected");
 	const [ColorScheme, setColorScheme] = useState("red");
 
 	useEffect(() => {
-		if (settings.slStatus) {
+		if (status) {
 			setslStatus("Connected");
 			setColorScheme("green");
 		}
-	}, [settings]);
+	}, [status]);
 
 	return (
 		<div

@@ -14,7 +14,7 @@ import {
 	Center,
 	Text,
 } from "@chakra-ui/react";
-import { addTime } from "../../Api";
+import { addTime, setTime } from "../../Api";
 
 const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 	const [Seconds, setSeconds] = useState(30);
@@ -62,7 +62,7 @@ const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 
 							<Button
 								onClick={() => {
-									addTime(
+									setTime(
 										ws,
 										(parseInt(formattedHours) * 3600 || 0) +
 											(parseInt(formattedMinutes) * 60 || 0) +
