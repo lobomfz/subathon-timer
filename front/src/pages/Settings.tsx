@@ -103,7 +103,7 @@ const Settings: React.FC = () => {
 							<TimingSettings ws={ws} input_settings={settings} />
 						</TabPanel>
 						<TabPanel>
-							<ConnectivitySettings ws={ws} />
+							<ConnectivitySettings ws={ws} settings={settings} />
 						</TabPanel>
 						<TabPanel>
 							<ChangeTime ws={ws} />

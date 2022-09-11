@@ -1,9 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { connectSl } from "../../Api";
-import { Input, Button, Grid, GridItem } from "@chakra-ui/react";
+import { Input, Button, Grid, GridItem, Badge, Center } from "@chakra-ui/react";
 
-const ConnectivitySettings: React.FC<{ ws: any }> = ({ ws }) => {
+const ConnectivitySettings: React.FC<{ ws: any; settings?: object }> = ({
+	ws,
+	settings = {},
+}) => {
 	const [slToken, setSlToken] = useState("");
+	const [slStatus, setslStatus] = useState("Not Connected");
+	const [ColorScheme, setColorScheme] = useState("red");
+
+	useEffect(() => {
+		if (settings.slStatus) {
+			setslStatus("Connected");
+			setColorScheme("green");
+		}
+	}, [settings]);
+
 	return (
 		<div
 			id='settings'
@@ -13,8 +26,8 @@ const ConnectivitySettings: React.FC<{ ws: any }> = ({ ws }) => {
 				width: "80%",
 			}}
 		>
-			<Grid templateColumns='repeat(6, 1fr)' gap={8}>
-				<GridItem colSpan={5}>
+			<Grid templateColumns='repeat(7, 1fr)' gap={8}>
+				<GridItem colSpan={6}>
 					<Input
 						onChange={(e) => setSlToken(e.currentTarget.value)}
 						placeholder='Update Streamlabs Socket API'
@@ -34,9 +47,14 @@ const ConnectivitySettings: React.FC<{ ws: any }> = ({ ws }) => {
 					</Button>
 				</GridItem>
 			</Grid>
+
+			<br />
+			<Center>
+				<Badge colorScheme={ColorScheme}>{slStatus}</Badge>
+			</Center>
 			<br />
 			<br />
-			<br />
+
 			<Button onClick={() => connectSl(ws, slToken)} colorScheme='purple'>
 				Save
 			</Button>
