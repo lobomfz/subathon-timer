@@ -35,6 +35,15 @@ function startTMI(ws) {
 		channels: [ws.name],
 	});
 
+	var aliveCheck = setInterval(() => {
+		if (!ws.isAlive) {
+			console.log("disonnecting tmi");
+			client.disconnect();
+			clearInterval(aliveCheck);
+			return 0;
+		}
+	}, 1000);
+
 	client.connect();
 
 	client.on(
@@ -78,6 +87,15 @@ function startTMI(ws) {
 
 function connectStreamlabs(ws) {
 	if (ws.socket) ws.socket.disconnect();
+	console.log("connecting to sl");
+	var aliveCheck = setInterval(() => {
+		if (!ws.isAlive) {
+			console.log("disconnecting sl");
+			ws.socket.disconnect();
+			clearInterval(aliveCheck);
+			return 0;
+		}
+	}, 1000);
 
 	ws.socket = io.connect(`https://sockets.streamlabs.com?token=${ws.slToken}`, {
 		reconnect: true,
@@ -224,6 +242,7 @@ function main() {
 		}, 1000);
 
 		ws.on("close", () => {
+			ws.isAlive = false;
 			console.log(`Disconnected from ${ws.name}`);
 			clearInterval(timerInterval);
 		});
