@@ -3,7 +3,7 @@ import ConnectivitySettings from "./Settings/Connectivity";
 import Timer from "../Timer";
 import * as consts from "../Consts";
 import TimingSettings from "./Settings/TimingSettings";
-import ManipulateTime from "./Settings/ChangeTime";
+import ChangeTime from "./Settings/ChangeTime";
 import {
 	Spinner,
 	Tabs,
@@ -11,8 +11,6 @@ import {
 	TabPanels,
 	Tab,
 	TabPanel,
-	Stack,
-	Divider,
 	Button,
 	Center,
 } from "@chakra-ui/react";
@@ -95,7 +93,7 @@ const Settings: React.FC = () => {
 				<Tabs>
 					<TabList>
 						<Tab>Timer Settings</Tab>
-						<Tab>Connectivity Settings</Tab>
+						<Tab>Connect Streamlabs</Tab>
 						<Tab>Change Time</Tab>
 					</TabList>
 					<br />
@@ -108,7 +106,7 @@ const Settings: React.FC = () => {
 							<ConnectivitySettings ws={ws} />
 						</TabPanel>
 						<TabPanel>
-							<ManipulateTime ws={ws} />
+							<ChangeTime ws={ws} />
 						</TabPanel>
 					</TabPanels>
 				</Tabs>

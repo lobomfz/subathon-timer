@@ -16,7 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { addTime } from "../../Api";
 
-const ManipulateTime: React.FC<{ ws: any }> = ({ ws }) => {
+const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 	const [Seconds, setSeconds] = useState(30);
 	const [Minutes, setMinutes] = useState(10);
 	const [Hours, setHours] = useState(1);
@@ -26,7 +26,7 @@ const ManipulateTime: React.FC<{ ws: any }> = ({ ws }) => {
 
 	return (
 		<div
-			id='ManipulateTimer'
+			id='ChangeTimer'
 			style={{
 				margin: "auto",
 				textAlign: "center",
@@ -161,4 +161,4 @@ const ManipulateTime: React.FC<{ ws: any }> = ({ ws }) => {
 	);
 };
 
-export default ManipulateTime;
+export default ChangeTime;

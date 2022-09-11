@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { connectSl } from "../../Api";
-import { Input, Button } from "@chakra-ui/react";
+import { Input, Button, Grid, GridItem } from "@chakra-ui/react";
 
 const ConnectivitySettings: React.FC<{ ws: any }> = ({ ws }) => {
 	const [slToken, setSlToken] = useState("");
@@ -13,10 +13,27 @@ const ConnectivitySettings: React.FC<{ ws: any }> = ({ ws }) => {
 				width: "80%",
 			}}
 		>
-			<Input
-				onChange={(e) => setSlToken(e.currentTarget.value)}
-				placeholder='Update Streamlabs Socket API'
-			/>
+			<Grid templateColumns='repeat(6, 1fr)' gap={8}>
+				<GridItem colSpan={5}>
+					<Input
+						onChange={(e) => setSlToken(e.currentTarget.value)}
+						placeholder='Update Streamlabs Socket API'
+					/>
+				</GridItem>
+				<GridItem colSpan={1}>
+					<Button
+						colorScheme='purple'
+						onClick={() =>
+							window.open(
+								"https://streamlabs.com/dashboard#/settings/api-settings",
+								"_blank"
+							)
+						}
+					>
+						Get Token
+					</Button>
+				</GridItem>
+			</Grid>
 			<br />
 			<br />
 			<br />
