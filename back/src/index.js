@@ -188,27 +188,21 @@ async function sendError(ws, message) {
 	);
 }
 
-async function validateUser(ws, data) {
-	axios
-		.get(`https://api.twitch.tv/helix/users`, {
-			headers: {
-				Authorization: `Bearer ${data.accessToken}`,
-				"Client-Id": client_id,
-			},
-		})
-		.then((httpRes) => {
-			if (httpRes.data.data[0].id == ws.userId) return true;
-			sendError(ws, "invalid token");
-			return false;
-		})
-		.catch(function (error) {
-			sendError(ws, "invalid token");
-			return false;
-		});
-}
-
 function heartbeat() {
 	this.isAlive = true;
+}
+
+function updateSetting(ws, data) {
+	switch (data.setting) {
+		case "subTime":
+			console.log("setting sub time to", parseInt(data.value) || 60);
+			ws.sub = parseInt(data.value) || 60;
+			break;
+		case "dollarTime":
+			console.log("setting dollar time to", parseInt(data.value) || 60);
+			ws.dollar = parseInt(data.value) || 15;
+			break;
+	}
 }
 
 function main() {
@@ -258,7 +252,7 @@ function main() {
 					connectStreamlabs(ws);
 					break;
 				case "setSetting":
-					ws[data.setting] = data.value;
+					updateSetting(ws, data);
 					pushToDb(ws);
 					break;
 				case "setTime":

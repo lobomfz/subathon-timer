@@ -10,12 +10,12 @@ const ConnectivitySettings: React.FC<{ ws: any }> = ({ ws }) => {
 			style={{
 				margin: "auto",
 				textAlign: "center",
-				width: "30%",
+				width: "80%",
 			}}
 		>
 			<Input
 				onChange={(e) => setSlToken(e.currentTarget.value)}
-				placeholder='Update Socket API'
+				placeholder='Update Streamlabs Socket API'
 			/>
 			<br />
 			<br />

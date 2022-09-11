@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from "react";
 
-var timer;
+var timer: string;
 
-const Timer: React.FC<{ seconds: number; textAlign: any }> = ({
-	seconds,
-	textAlign = "center",
-}) => {
-	if (seconds > 0)
-		timer = `${Math.floor(seconds / 3600)}:${(
+const Timer: React.FC<{
+	input_seconds: number;
+	textAlign?: any;
+	color?: any;
+}> = ({ input_seconds, textAlign = "center", color = "black" }) => {
+	if (input_seconds > 0)
+		timer = `${Math.floor(input_seconds / 3600)}:${(
 			"0" +
-			(Math.floor(seconds / 60) % 60)
-		).slice(-2)}:${("0" + (seconds % 60)).slice(-2)}`;
+			(Math.floor(input_seconds / 60) % 60)
+		).slice(-2)}:${("0" + (input_seconds % 60)).slice(-2)}`;
 	else timer = "00:00:00";
 
 	return (
 		<div
 			className='Timer'
 			style={{
-				color: "black",
+				color: color,
 				fontFamily: "Roboto, sans-serif",
 				fontSize: "128px",
 				fontWeight: 400,

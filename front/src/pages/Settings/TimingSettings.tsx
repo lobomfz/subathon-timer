@@ -1,40 +1,103 @@
 import React, { useEffect, useState } from "react";
-import { Input, Button } from "@chakra-ui/react";
+import {
+	NumberInput,
+	NumberInputField,
+	NumberInputStepper,
+	NumberIncrementStepper,
+	NumberDecrementStepper,
+	InputGroup,
+	InputLeftAddon,
+	Spinner,
+	Button,
+	SimpleGrid,
+} from "@chakra-ui/react";
+import { setSetting } from "../../Api";
 
-const TimingSettings: React.FC<{ ws: any; settings: any }> = ({
+const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 	ws,
-	settings,
+	input_settings,
 }) => {
-	const [subTime, setSubTime] = useState("");
+	const [fetched, setFetched] = useState(false);
+	const [SubTime, setSubTime] = useState("0");
+	const [DollarTime, setDollarTime] = useState("0");
+
 	const pushUpdates = () => {
-		console.log("button pressed");
+		setSetting(ws, "subTime", SubTime);
+		setSetting(ws, "dollarTime", DollarTime);
 	};
 
 	useEffect(() => {
-		if (settings.sub) setSubTime(settings.sub);
-	}, [settings]);
+		if (typeof input_settings.sub == "number") {
+			setFetched(true);
+		}
+	}, [input_settings]);
 
-	return (
-		<div
-			id='TimingSettings'
-			style={{
-				margin: "auto",
-				textAlign: "center",
-				width: "30%",
-			}}
-		>
-			<Input
-				onChange={(e) => setSubTime(e.currentTarget.value)}
-				value={subTime}
-			/>
-			<br />
-			<br />
-			<br />
-			<Button onClick={pushUpdates} colorScheme='purple'>
-				Save
-			</Button>
-		</div>
-	);
+	if (fetched)
+		return (
+			<div
+				id='TimingSettings'
+				style={{
+					margin: "auto",
+					textAlign: "center",
+					width: "80%",
+				}}
+			>
+				<SimpleGrid columns={2} spacing={10}>
+					<InputGroup>
+						<InputLeftAddon children='Seconds per sub' />
+						<NumberInput
+							defaultValue={input_settings.sub}
+							onChange={(value) => setSubTime(value)}
+						>
+							<NumberInputField />
+							<NumberInputStepper>
+								<NumberIncrementStepper />
+								<NumberDecrementStepper />
+							</NumberInputStepper>
+						</NumberInput>
+					</InputGroup>
+					<InputGroup>
+						<InputLeftAddon children='Seconds per $1' />
+						<NumberInput
+							defaultValue={input_settings.dollar}
+							onChange={(value) => setDollarTime(value)}
+						>
+							<NumberInputField />
+							<NumberInputStepper>
+								<NumberIncrementStepper />
+								<NumberDecrementStepper />
+							</NumberInputStepper>
+						</NumberInput>
+					</InputGroup>
+				</SimpleGrid>
+				<br />
+				<br />
+				<br />
+				<Button onClick={pushUpdates} colorScheme='purple'>
+					Save
+				</Button>
+			</div>
+		);
+	else
+		return (
+			<div
+				style={{
+					margin: "auto",
+					textAlign: "center",
+					width: "30%",
+				}}
+			>
+				<Spinner
+					thickness='4px'
+					speed='0.65s'
+					emptyColor='gray.200'
+					color='blue.500'
+					size='xl'
+				></Spinner>
+				<br />
+				Loading
+			</div>
+		);
 };
 
 export default TimingSettings;

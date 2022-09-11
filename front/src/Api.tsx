@@ -1,4 +1,4 @@
-export function setSetting(ws: any, setting: string, value: number) {
+export function setSetting(ws: WebSocket, setting: string, value: string) {
 	ws.send(
 		JSON.stringify({
 			event: "setSetting",
@@ -9,7 +9,7 @@ export function setSetting(ws: any, setting: string, value: number) {
 	return 1;
 }
 
-export function connectSl(ws: any, socketToken: string) {
+export function connectSl(ws: WebSocket, socketToken: string) {
 	ws.send(
 		JSON.stringify({
 			event: "connectStreamlabs",
