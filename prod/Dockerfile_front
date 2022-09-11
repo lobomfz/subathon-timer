@@ -1,0 +1,17 @@
+FROM node:18-alpine as build-stage
+
+COPY --chown=node:node ./front/ /home/node/app
+WORKDIR /home/node/app
+USER node
+
+RUN rm -rf node_modules package-lock.json
+RUN npm install && npm run build
+
+FROM nginx:1.15
+
+COPY --from=build-stage /home/node/app/dist/ /usr/share/nginx/html
+COPY ./prod/nginx.conf /etc/nginx/nginx.conf
+COPY ./prod/timer.crt /etc/ssl/timer.crt
+COPY ./prod/timer.key /etc/ssl/private/timer.key
+
+RUN rm /etc/nginx/conf.d/default.conf

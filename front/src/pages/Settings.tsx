@@ -110,7 +110,7 @@ const Settings: React.FC = () => {
 						colorScheme='purple'
 						onClick={() => {
 							navigator.clipboard.writeText(
-								`http://localhost:5173/widget?token=${token}`
+								`https://timer.lobomfz.com/widget?token=${token}`
 							);
 						}}
 					>

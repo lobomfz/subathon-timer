@@ -66,7 +66,7 @@ const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 										ws,
 										(parseInt(formattedHours) * 3600 || 0) +
 											(parseInt(formattedMinutes) * 60 || 0) +
-											parseInt(formattedSeconds) || 0
+											(parseInt(formattedSeconds) || 0)
 									);
 								}}
 								colorScheme='purple'
