@@ -18,8 +18,8 @@ const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 	input_settings,
 }) => {
 	const [fetched, setFetched] = useState(false);
-	const [SubTime, setSubTime] = useState("0");
-	const [DollarTime, setDollarTime] = useState("0");
+	const [SubTime, setSubTime] = useState(0);
+	const [DollarTime, setDollarTime] = useState(0);
 
 	const pushUpdates = () => {
 		setSetting(ws, "subTime", SubTime);
@@ -47,7 +47,7 @@ const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 						<InputLeftAddon children='Seconds per sub' />
 						<NumberInput
 							defaultValue={input_settings.sub}
-							onChange={(value) => setSubTime(value)}
+							onChange={(value) => setSubTime(parseInt(value))}
 						>
 							<NumberInputField />
 							<NumberInputStepper>
@@ -60,7 +60,7 @@ const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 						<InputLeftAddon children='Seconds per $1' />
 						<NumberInput
 							defaultValue={input_settings.dollar}
-							onChange={(value) => setDollarTime(value)}
+							onChange={(value) => setDollarTime(parseInt(value))}
 						>
 							<NumberInputField />
 							<NumberInputStepper>

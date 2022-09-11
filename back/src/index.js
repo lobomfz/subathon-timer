@@ -15,7 +15,7 @@ const client_id = "3qy8w6q7u5u7wamjmggmykmrv3wjj9";
 const defaultValues = {
 	sub: 60,
 	dollar: 15,
-	pushFrequency: 5,
+	pushFrequency: 1,
 	timeoutTime: 30,
 };
 
@@ -103,6 +103,7 @@ function connectStreamlabs(ws) {
 
 function lowerTimer(ws) {
 	if (ws.timer > 0) ws.timer -= 1;
+	pushToDb(ws);
 }
 
 async function syncTimer(ws) {
@@ -117,7 +118,6 @@ async function syncTimer(ws) {
 			slStatus: ws.slStatus,
 		})
 	);
-	pushToDb(ws);
 }
 
 async function login(ws, accessToken) {
@@ -223,14 +223,8 @@ function main() {
 			lowerTimer(ws);
 		}, 1000);
 
-		dbSync = setInterval(() => {
-			pushToDb(ws);
-		}, defaultValues.pushFrequency * 1000);
-
 		ws.on("close", () => {
 			console.log(`Disconnected from ${ws.name}`);
-			pushToDb(ws);
-			clearInterval(dbSync);
 			clearInterval(timerInterval);
 		});
 
@@ -258,6 +252,9 @@ function main() {
 				case "setTime":
 					ws.timer = data.value;
 					pushToDb(ws);
+					break;
+				case "addTime":
+					addToTimer(ws, data.value);
 					break;
 			}
 		};

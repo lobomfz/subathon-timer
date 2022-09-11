@@ -3,6 +3,7 @@ import ConnectivitySettings from "./Settings/Connectivity";
 import Timer from "../Timer";
 import * as consts from "../Consts";
 import TimingSettings from "./Settings/TimingSettings";
+import ManipulateTime from "./Settings/ChangeTime";
 import {
 	Spinner,
 	Tabs,
@@ -13,6 +14,7 @@ import {
 	Stack,
 	Divider,
 	Button,
+	Center,
 } from "@chakra-ui/react";
 
 const URL = consts.URL;
@@ -94,6 +96,7 @@ const Settings: React.FC = () => {
 					<TabList>
 						<Tab>Timer Settings</Tab>
 						<Tab>Connectivity Settings</Tab>
+						<Tab>Change Time</Tab>
 					</TabList>
 					<br />
 					<br />
@@ -104,19 +107,23 @@ const Settings: React.FC = () => {
 						<TabPanel>
 							<ConnectivitySettings ws={ws} />
 						</TabPanel>
+						<TabPanel>
+							<ManipulateTime ws={ws} />
+						</TabPanel>
 					</TabPanels>
 				</Tabs>
-
-				<Button
-					colorScheme='purple'
-					onClick={() => {
-						navigator.clipboard.writeText(
-							`http://localhost:5173/widget?token=${token}`
-						);
-					}}
-				>
-					Copy widget URL
-				</Button>
+				<Center>
+					<Button
+						colorScheme='purple'
+						onClick={() => {
+							navigator.clipboard.writeText(
+								`http://localhost:5173/widget?token=${token}`
+							);
+						}}
+					>
+						Copy widget URL
+					</Button>
+				</Center>
 			</div>
 		);
 
