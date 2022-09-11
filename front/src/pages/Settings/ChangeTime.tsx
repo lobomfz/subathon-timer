@@ -17,13 +17,12 @@ import {
 import { addTime } from "../../Api";
 
 const ManipulateTime: React.FC<{ ws: any }> = ({ ws }) => {
-	const [FullSeconds, setFullSeconds] = useState(0);
 	const [Seconds, setSeconds] = useState(30);
 	const [Minutes, setMinutes] = useState(10);
 	const [Hours, setHours] = useState(1);
-	const [formattedSeconds, setFormattedSeconds] = useState("Seconds");
-	const [formattedMinutes, setFormattedMinutes] = useState("Minutes");
-	const [formattedHours, setFormattedHours] = useState("Hours");
+	const [formattedSeconds, setFormattedSeconds] = useState("");
+	const [formattedMinutes, setFormattedMinutes] = useState("");
+	const [formattedHours, setFormattedHours] = useState("");
 
 	return (
 		<div
