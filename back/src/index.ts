@@ -81,7 +81,7 @@ function startTMI(ws: wsType) {
 
 function connectStreamlabs(ws: wsType) {
 	if (ws.socket) ws.socket.disconnect();
-	console.log("connecting to sl");
+	console.log(`connecting to ${ws.name} sl`);
 	var aliveCheck = setInterval(() => {
 		if (!ws.isAlive) {
 			ws.socket.disconnect();
