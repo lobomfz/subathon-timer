@@ -205,11 +205,14 @@ function heartbeat(ws: wsType) {
 function updateSetting(ws: wsType, data: any) {
 	switch (data.setting) {
 		case "subTime":
-			console.log("setting sub time to", parseInt(data.value) || 60);
+			console.log(`setting ${ws.name} sub time to`, parseInt(data.value) || 60);
 			ws.sub = parseInt(data.value) || 60;
 			break;
 		case "dollarTime":
-			console.log("setting dollar time to", parseInt(data.value) || 60);
+			console.log(
+				`setting ${ws.name} dollar time to`,
+				parseInt(data.value) || 60
+			);
 			ws.dollar = parseInt(data.value) || 15;
 			break;
 	}
