@@ -1,16 +1,14 @@
-const tmi = require("tmi.js");
-const fs = require("fs");
-const WebSocket = require("ws");
-const io = require("socket.io-client");
-const axios = require("axios");
-const database = require("./db");
-const url = require("url");
-const { clearInterval } = require("timers");
+import { createUser, Users } from "./db.js";
+import axios from "axios";
+import url from "url";
+import tmi from "tmi.js";
+import WebSocket from "ws";
+import io from "socket.io-client";
+import { user, wsType } from "./types.js";
 
-const port = 3001;
 const portWss = 3003;
 const wss = new WebSocket.Server({ port: portWss });
-const client_id = "3qy8w6q7u5u7wamjmggmykmrv3wjj9";
+const client_id: string = process.env.CLIENT_ID || "";
 
 const defaultValues = {
 	sub: 60,
@@ -19,14 +17,14 @@ const defaultValues = {
 	timeoutTime: 30,
 };
 
-function addToTimer(ws, seconds) {
-	amount = parseInt(seconds) || 0;
+function addToTimer(ws: wsType, seconds: number) {
+	var amount = seconds || 0;
 	ws.timer += amount;
 	console.log(`adding ${amount} to ${ws.name}`);
 	syncTimer(ws);
 }
 
-function startTMI(ws) {
+function startTMI(ws: wsType) {
 	console.log(`Connecting to ${ws.name} tmi`);
 	const client = new tmi.Client({
 		connection: {
@@ -49,43 +47,39 @@ function startTMI(ws) {
 	client.on(
 		"subgift",
 		(channel, username, streakMonths, recipient, methods, userstate) => {
-			var plan = userstate["msg-param-sub-plan"];
-			var tier = plan == "Prime" ? 1 : plan / 1000;
-			var amount = tier * ws.sub;
-			addToTimer(ws, amount);
+			var plan: string = userstate["msg-param-sub-plan"] || "";
+			addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
 		}
 	);
 
-	client.on("anongiftpaidupgrade", (channel, username, userstate) => {
-		var plan = userstate["msg-param-sub-plan"];
-		var tier = plan == "Prime" ? 1 : plan / 1000;
-		var amount = tier * ws.sub;
-		addToTimer(ws, amount);
+	client.on("anongiftpaidupgrade", (_channel, _username, userstate) => {
+		var plan: string = userstate["msg-param-sub-plan"] || "";
+		addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
 	});
 
-	client.on("cheer", (channel, userstate, message) => {
-		addToTimer(ws, (userstate["bits"] / 100) * ws.dollar);
+	client.on("cheer", (_channel, userstate, _message) => {
+		var bits: string = userstate["bits"] || "";
+		addToTimer(ws, (parseInt(bits) / 100) * ws.dollar);
 	});
 
 	client.on(
 		"resub",
-		(channel, username, months, message, userstate, methods) => {
-			var plan = userstate["msg-param-sub-plan"];
-			var tier = plan == "Prime" ? 1 : plan / 1000;
-			var amount = tier * ws.sub;
-			addToTimer(ws, amount);
+		(_channel, _username, _months, _message, userstate, _methods) => {
+			var plan: string = userstate["msg-param-sub-plan"] || "";
+			addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
 		}
 	);
 
-	client.on("subscription", (channel, username, method, message, userstate) => {
-		var plan = userstate["msg-param-sub-plan"];
-		var tier = plan == "Prime" ? 1 : plan / 1000;
-		var amount = tier * ws.sub;
-		addToTimer(ws, amount);
-	});
+	client.on(
+		"subscription",
+		(_channel, _username, _method, _message, userstate) => {
+			var plan: string = userstate["msg-param-sub-plan"] || "";
+			addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
+		}
+	);
 }
 
-function connectStreamlabs(ws) {
+function connectStreamlabs(ws: wsType) {
 	if (ws.socket) ws.socket.disconnect();
 	console.log("connecting to sl");
 	var aliveCheck = setInterval(() => {
@@ -97,8 +91,7 @@ function connectStreamlabs(ws) {
 		}
 	}, 1000);
 
-	ws.socket = io.connect(`https://sockets.streamlabs.com?token=${ws.slToken}`, {
-		reconnect: true,
+	ws.socket = io(`https://sockets.streamlabs.com?token=${ws.slToken}`, {
 		transports: ["websocket"],
 	});
 
@@ -111,7 +104,7 @@ function connectStreamlabs(ws) {
 		ws.slStatus = false;
 	});
 
-	ws.socket.on("event", (e) => {
+	ws.socket.on("event", (e: any) => {
 		if (e.type == "donation") {
 			var amount = 1 * e.message[0].amount * ws.dollar;
 			addToTimer(ws, amount);
@@ -119,18 +112,18 @@ function connectStreamlabs(ws) {
 	});
 }
 
-function lowerTimer(ws) {
+function lowerTimer(ws: wsType) {
 	if (ws.timer > 0) ws.timer -= 1;
 	pushToDb(ws);
 }
 
-async function syncTimer(ws) {
+async function syncTimer(ws: wsType) {
 	if (!Number.isInteger(ws.timer)) ws.timer = 0;
-	if (!ws.slStatus) ws.sl;
+	if (!ws.slStatus) ws.slStatus = false;
 	ws.send(
 		JSON.stringify({
 			success: true,
-			time: parseInt(ws.timer),
+			time: ws.timer,
 			sub: ws.sub,
 			dollar: ws.dollar,
 			slStatus: ws.slStatus,
@@ -138,8 +131,9 @@ async function syncTimer(ws) {
 	);
 }
 
-async function login(ws, accessToken) {
+async function login(ws: wsType, accessToken: string) {
 	ws.slStatus = false;
+
 	axios
 		.get(`https://api.twitch.tv/helix/users`, {
 			headers: {
@@ -151,9 +145,9 @@ async function login(ws, accessToken) {
 			ws.userId = httpRes.data.data[0].id;
 			ws.name = httpRes.data.data[0].login;
 
-			database.Users.findByPk(ws.userId).then((res) => {
+			Users.findByPk(ws.userId).then((res: any) => {
 				if (!res) {
-					newUser = {
+					var newUser: user = {
 						userId: ws.userId,
 						name: ws.name,
 						accessToken: accessToken,
@@ -162,7 +156,7 @@ async function login(ws, accessToken) {
 						timer: 0,
 					};
 					Object.assign(ws, newUser);
-					database.createUser(newUser);
+					createUser(newUser);
 					ws.initialized = true;
 					startTMI(ws);
 				} else {
@@ -174,14 +168,14 @@ async function login(ws, accessToken) {
 			});
 		})
 		.catch(function (error) {
-			sendError(ws, "failed to login" + error);
+			sendError(ws, `calling axios with ${accessToken} and ${client_id}`);
 			return 0;
 		});
 }
 
-async function pushToDb(ws) {
+async function pushToDb(ws: wsType) {
 	if (ws.userId)
-		database.Users.update(
+		Users.update(
 			{
 				name: ws.name,
 				accessToken: ws.accessToken,
@@ -198,7 +192,7 @@ async function pushToDb(ws) {
 		);
 }
 
-async function sendError(ws, message) {
+async function sendError(ws: wsType, message: string) {
 	ws.send(
 		JSON.stringify({
 			error: message,
@@ -206,11 +200,11 @@ async function sendError(ws, message) {
 	);
 }
 
-function heartbeat() {
-	this.isAlive = true;
+function heartbeat(ws: wsType) {
+	ws.isAlive = true;
 }
 
-function updateSetting(ws, data) {
+function updateSetting(ws: wsType, data: any) {
 	switch (data.setting) {
 		case "subTime":
 			console.log("setting sub time to", parseInt(data.value) || 60);
@@ -224,20 +218,20 @@ function updateSetting(ws, data) {
 }
 
 function main() {
-	wss.on("connection", (ws, req) => {
+	wss.on("connection", (ws: wsType, req: any) => {
 		ws.isAlive = true;
-		ws.on("pong", heartbeat);
+		ws.on("pong", () => heartbeat(ws));
 
 		if (url.parse(req.url, true).query.token) {
 			try {
-				login(ws, url.parse(req.url, true).query.token);
+				login(ws, url.parse(req.url, true).query.token as string);
 			} catch (error) {
 				sendError(ws, "invalid token.");
 				return 0;
 			}
 		}
 
-		timerInterval = setInterval(() => {
+		const timerInterval = setInterval(() => {
 			lowerTimer(ws);
 		}, 1000);
 
@@ -247,9 +241,9 @@ function main() {
 			clearInterval(timerInterval);
 		});
 
-		ws.onmessage = function (event) {
+		ws.onmessage = function (event: any) {
 			try {
-				data = JSON.parse(event.data);
+				var data = JSON.parse(event.data);
 			} catch (error) {
 				sendError(ws, "json error");
 				return 0;
@@ -280,7 +274,7 @@ function main() {
 	});
 
 	const timeout = setInterval(function ping() {
-		wss.clients.forEach(function each(ws) {
+		wss.clients.forEach(function each(ws: any) {
 			if (ws.isAlive === false) return ws.terminate();
 			console.log(`pinging ${ws.name}`);
 

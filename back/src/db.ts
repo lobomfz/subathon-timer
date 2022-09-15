@@ -1,4 +1,5 @@
-const { Sequelize, DataTypes } = require("sequelize");
+import { Sequelize, DataTypes } from "sequelize";
+import { user } from "./types.js";
 
 const sequelize = new Sequelize(
 	process.env.DB_SCHEMA || "postgres",
@@ -6,7 +7,7 @@ const sequelize = new Sequelize(
 	process.env.DB_PASSWORD || "",
 	{
 		host: process.env.DB_HOST || "postgres",
-		port: process.env.DB_PORT || 5432,
+		port: parseInt(process.env.DB_PORT || "5432"),
 		dialect: "postgres",
 		dialectOptions: {
 			ssl: process.env.DB_SSL == "true",
@@ -15,7 +16,7 @@ const sequelize = new Sequelize(
 	}
 );
 
-const Users = sequelize.define("User", {
+export const Users = sequelize.define("User", {
 	userId: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
@@ -47,7 +48,7 @@ const Users = sequelize.define("User", {
 	},
 });
 
-async function createUser(user) {
+export async function createUser(user: user) {
 	console.log;
 	Users.create({
 		userId: user.userId,
@@ -71,9 +72,3 @@ async function main() {
 }
 
 main();
-const tokenExists = (token) =>
-	Users.findOne({
-		where: { accessToken: token },
-	}).then((token) => token !== null);
-
-module.exports = { createUser, Users, tokenExists };

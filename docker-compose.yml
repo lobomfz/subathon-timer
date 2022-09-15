@@ -10,6 +10,9 @@ services:
     restart: always
     depends_on:
       - postgres
+    environment:
+      - DB_HOST=${DB_HOST}
+      - CLIENT_ID=${CLIENT_ID}
     build:
       context: .
       dockerfile: Dockerfile_back
@@ -22,11 +25,13 @@ services:
   react:
     network_mode: "host"
     restart: always
+    environment:
+      - VITE_WEBSOCKET_URL=${VITE_WEBSOCKET_URL}
+      - VITE_CLIENT_ID=${VITE_CLIENT_ID}
+      - VITE_REDIRECT_URI=${VITE_REDIRECT_URI}
     build:
       context: .
       dockerfile: Dockerfile_front
-    ports:
-      - "5173:5173"
     volumes:
       - ./front/src:/home/node/app/src
 

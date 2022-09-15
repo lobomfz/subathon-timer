@@ -10,6 +10,7 @@ package-lock.json
 nginx.conf
 timer.crt
 timer.key
+build
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

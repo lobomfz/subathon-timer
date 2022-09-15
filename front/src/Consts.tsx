@@ -1,3 +1,3 @@
-export const URL = "wss://timer.lobomfz.com/socket";
-export const client_id = "3qy8w6q7u5u7wamjmggmykmrv3wjj9";
-export const redirect_uri = "https://timer.lobomfz.com/login";
+export const URL = import.meta.env.VITE_WEBSOCKET_URL;
+export const client_id = import.meta.env.VITE_CLIENT_ID;
+export const redirect_uri = import.meta.env.VITE_REDIRECT_URI;
