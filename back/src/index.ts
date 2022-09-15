@@ -269,6 +269,7 @@ function main() {
 				case "setTime":
 					ws.timer = parseInt(data.value) || 0;
 					pushToDb(ws);
+					syncTimer(ws);
 					break;
 				case "addTime":
 					addToTimer(ws, data.value);
