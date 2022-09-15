@@ -6,6 +6,8 @@ services:
       - POSTGRES_HOST_AUTH_METHOD=trust
     networks:
       - web
+    volumes:
+      - pgdata:/var/lib/postgresql/data
   front:
     network_mode: "host"
     restart: always
@@ -28,7 +30,8 @@ services:
       - web
     volumes:
       - ./back/src:/home/node/app/src
-
 networks:
   web:
     driver: bridge
+volumes:
+  pgdata:
