@@ -6,8 +6,7 @@
 	"type": "module",
 	"author": "lobomfz",
 	"scripts": {
-		"compile": "npx tsc && node build/index.js",
-		"dev": "npx nodemon -e ts  --exec \"npm run compile\"",
+		"dev": "npx nodemon -e ts  --exec \"npx tsc && node build/index.js\"",
 		"start": "npx tsc && node build/index.js"
 	},
 	"dependencies": {

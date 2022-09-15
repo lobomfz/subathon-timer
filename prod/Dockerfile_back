@@ -1,12 +1,11 @@
 FROM node:18-alpine
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
+USER root
+COPY back/ /home/node/app
 WORKDIR /home/node/app
-COPY back/package.json ./
+RUN rm -rf node_modules package-lock.json build && chown -R node:node /home/node/app
 USER node
 
-RUN npm install
-
-COPY --chown=node:node . .
+RUN npm install --save-dev
 
 CMD [ "npm", "start" ]

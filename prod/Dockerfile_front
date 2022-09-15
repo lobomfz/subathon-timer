@@ -1,10 +1,12 @@
 FROM node:18-alpine as build-stage
 
-COPY --chown=node:node ./front/ /home/node/app
+USER root
+COPY front/ /home/node/app
+COPY .env /home/node/app/.env
 WORKDIR /home/node/app
+RUN rm -rf node_modules package-lock.json && chown -R node:node /home/node/app
 USER node
 
-RUN rm -rf node_modules package-lock.json
 RUN npm install && npm run build
 
 FROM nginx:1.15

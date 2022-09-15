@@ -35,7 +35,7 @@ function startTMI(ws: wsType) {
 
 	var aliveCheck = setInterval(() => {
 		if (!ws.isAlive) {
-			console.log("disonnecting tmi");
+			console.log(`disconnecting from ${ws.name}`);
 			client.disconnect();
 			clearInterval(aliveCheck);
 			return 0;
@@ -84,7 +84,6 @@ function connectStreamlabs(ws: wsType) {
 	console.log("connecting to sl");
 	var aliveCheck = setInterval(() => {
 		if (!ws.isAlive) {
-			console.log("disconnecting sl");
 			ws.socket.disconnect();
 			clearInterval(aliveCheck);
 			return 0;
@@ -133,7 +132,6 @@ async function syncTimer(ws: wsType) {
 
 async function login(ws: wsType, accessToken: string) {
 	ws.slStatus = false;
-
 	axios
 		.get(`https://api.twitch.tv/helix/users`, {
 			headers: {
@@ -168,7 +166,7 @@ async function login(ws: wsType, accessToken: string) {
 			});
 		})
 		.catch(function (error) {
-			sendError(ws, `calling axios with ${accessToken} and ${client_id}`);
+			sendError(ws, "failed to login" + error);
 			return 0;
 		});
 }

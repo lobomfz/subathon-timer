@@ -16,6 +16,9 @@ services:
     restart: always
     depends_on:
       - postgres
+    environment:
+      - DB_HOST=${DB_HOST}
+      - CLIENT_ID=${CLIENT_ID}
     build:
       context: .
       dockerfile: prod/Dockerfile_back
