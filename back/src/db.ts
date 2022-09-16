@@ -11,6 +11,7 @@ const sequelize = new Sequelize(
 		dialect: "postgres",
 		dialectOptions: {
 			ssl: process.env.DB_SSL == "true",
+			rejectUnauthorized: false,
 		},
 		logging: false,
 	}
@@ -30,11 +31,11 @@ export const Users = sequelize.define("User", {
 		type: DataTypes.STRING,
 		allowNull: false,
 	},
-	sub: {
+	subTime: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
 	},
-	dollar: {
+	dollarTime: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
 	},
@@ -42,7 +43,7 @@ export const Users = sequelize.define("User", {
 		type: DataTypes.STRING,
 		allowNull: true,
 	},
-	timer: {
+	endTime: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
 	},
@@ -54,10 +55,10 @@ export async function createUser(user: user) {
 		userId: user.userId,
 		name: user.name,
 		accessToken: user.accessToken,
-		sub: user.sub,
-		dollar: user.dollar,
+		subTime: user.subTime,
+		dollarTime: user.dollarTime,
 		slToken: user.slToken,
-		timer: user.timer,
+		endTime: user.endTime,
 	});
 }
 

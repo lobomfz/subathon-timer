@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:14.5-alpine
     environment:
-      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_PASSWORD=postgres
     networks:
       - web
     volumes:
@@ -20,7 +20,9 @@ services:
       - postgres
     environment:
       - DB_HOST=${DB_HOST}
+      - DB_PASSWORD=${DB_PASSWORD}
       - CLIENT_ID=${CLIENT_ID}
+      - DATABASE_URL=${DATABASE_URL}
     build:
       context: .
       dockerfile: prod/Dockerfile_back

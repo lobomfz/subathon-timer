@@ -15,27 +15,35 @@ import {
 	Center,
 } from "@chakra-ui/react";
 
-const URL = consts.URL;
+const WS_URL = consts.WS_URL;
+const BASE_URL = consts.BASE_URL;
+
 let ws: WebSocket;
 
 const Settings: React.FC = () => {
 	const [settings, setSettings] = useState({ slStatus: false });
 	const [seconds, setSeconds] = useState(0);
+	const [endTime, setEndTime] = useState(0);
 	const [fetched, setFetched] = useState(false);
 
 	const token = new URLSearchParams(window.location.search).get("token");
 
+	const updateSeconds = (endTime: number) => {
+		setEndTime(endTime);
+		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
+	};
+
 	const connectWs = () => {
 		console.log("called");
-		ws = new WebSocket(`${URL}?token=${token}`);
+		ws = new WebSocket(`${WS_URL}?token=${token}&page=settings`);
 
 		ws.onmessage = (event: any) => {
 			const response = JSON.parse(event.data);
 			console.log(`received ${event.data}`);
 			setSettings(response);
 
-			if ("time" in response) {
-				setSeconds(parseInt(response.time));
+			if ("endTime" in response) {
+				updateSeconds(response.endTime);
 				if (!fetched) {
 					setFetched(true);
 				}
@@ -101,7 +109,7 @@ const Settings: React.FC = () => {
 							<ConnectivitySettings ws={ws} status={settings.slStatus} />
 						</TabPanel>
 						<TabPanel>
-							<ChangeTime ws={ws} />
+							<ChangeTime ws={ws} endTime={endTime} />
 						</TabPanel>
 					</TabPanels>
 				</Tabs>
@@ -110,7 +118,7 @@ const Settings: React.FC = () => {
 						colorScheme='purple'
 						onClick={() => {
 							navigator.clipboard.writeText(
-								`https://timer.lobomfz.com/widget?token=${token}`
+								`${BASE_URL}/widget?token=${token}`
 							);
 						}}
 					>

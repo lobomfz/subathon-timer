@@ -27,9 +27,7 @@ const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 	};
 
 	useEffect(() => {
-		if (typeof input_settings.sub == "number") {
-			setFetched(true);
-		}
+		if (typeof input_settings.subTime == "number") setFetched(true);
 	}, [input_settings]);
 
 	if (fetched)
@@ -46,7 +44,7 @@ const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 					<InputGroup>
 						<InputLeftAddon children='Seconds per sub' />
 						<NumberInput
-							defaultValue={input_settings.sub}
+							defaultValue={input_settings.subTime}
 							onChange={(value) => setSubTime(parseInt(value))}
 						>
 							<NumberInputField />
@@ -59,7 +57,7 @@ const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 					<InputGroup>
 						<InputLeftAddon children='Seconds per $1' />
 						<NumberInput
-							defaultValue={input_settings.dollar}
+							defaultValue={input_settings.dollarTime}
 							onChange={(value) => setDollarTime(parseInt(value))}
 						>
 							<NumberInputField />

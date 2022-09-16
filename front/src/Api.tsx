@@ -29,24 +29,23 @@ export function connectSl(ws: WebSocket, socketToken: string) {
 	return 1;
 }
 
-export function addTime(ws: WebSocket, seconds: number) {
-	console.log("trying to add", seconds);
-	ws.send(
-		JSON.stringify({
-			event: "addTime",
-			value: seconds,
-		})
-	);
-	sync(ws);
+export function addTime(
+	ws: WebSocket,
+	currentEndTime: number,
+	seconds: number
+) {
+	const now = Math.trunc(new Date().getTime() / 1000);
+	if (currentEndTime < now) currentEndTime = now;
+	setEndTime(ws, currentEndTime + seconds);
 	return 1;
 }
 
-export function setTime(ws: WebSocket, seconds: number) {
-	console.log("trying to set time to", seconds);
+export function setEndTime(ws: WebSocket, endTime: number) {
+	console.log("trying to set end time to", endTime);
 	ws.send(
 		JSON.stringify({
-			event: "setTime",
-			value: seconds,
+			event: "setEndTime",
+			value: endTime,
 		})
 	);
 	sync(ws);

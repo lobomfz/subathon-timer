@@ -17,7 +17,7 @@ const Home: React.FC = () => {
 		>
 			<Button colorScheme='purple' size='lg'>
 				<a
-					href={`https://id.twitch.tv/oauth2/authorize?client_id=${consts.client_id}&redirect_uri=${consts.redirect_uri}&response_type=token`}
+					href={`https://id.twitch.tv/oauth2/authorize?client_id=${consts.CLIENT_ID}&redirect_uri=${consts.REDIRECT_URI}&response_type=token`}
 				>
 					login with twitch
 				</a>

@@ -14,9 +14,12 @@ import {
 	Center,
 	Text,
 } from "@chakra-ui/react";
-import { addTime, setTime } from "../../Api";
+import { addTime, setEndTime } from "../../Api";
 
-const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
+const ChangeTime: React.FC<{ ws: any; endTime: number }> = ({
+	ws,
+	endTime,
+}) => {
 	const [Seconds, setSeconds] = useState(30);
 	const [Minutes, setMinutes] = useState(10);
 	const [Hours, setHours] = useState(1);
@@ -62,11 +65,12 @@ const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 
 							<Button
 								onClick={() => {
-									setTime(
+									setEndTime(
 										ws,
 										(parseInt(formattedHours) * 3600 || 0) +
 											(parseInt(formattedMinutes) * 60 || 0) +
-											(parseInt(formattedSeconds) || 0)
+											(parseInt(formattedSeconds) || 0) +
+											Math.trunc(Date.now() / 1000)
 									);
 								}}
 								colorScheme='purple'
@@ -92,7 +96,7 @@ const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 							</NumberInput>
 							<Button
 								onClick={() => {
-									addTime(ws, Seconds);
+									addTime(ws, endTime, Seconds);
 								}}
 								colorScheme='purple'
 								width='60%'
@@ -117,7 +121,7 @@ const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 							</NumberInput>
 							<Button
 								onClick={() => {
-									addTime(ws, Minutes * 60);
+									addTime(ws, endTime, Minutes * 60);
 								}}
 								colorScheme='purple'
 								width='60%'
@@ -142,7 +146,7 @@ const ChangeTime: React.FC<{ ws: any }> = ({ ws }) => {
 							</NumberInput>
 							<Button
 								onClick={() => {
-									addTime(ws, Hours * 60 * 60);
+									addTime(ws, endTime, Hours * 60 * 60);
 								}}
 								colorScheme='purple'
 								width='

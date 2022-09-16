@@ -9,18 +9,19 @@ import { user, wsType } from "./types.js";
 const portWss = 3003;
 const wss = new WebSocket.Server({ port: portWss });
 const client_id: string = process.env.CLIENT_ID || "";
+const pages: Array<string> = ["settings", "widget"];
 
 const defaultValues = {
 	sub: 60,
 	dollar: 15,
 	pushFrequency: 1,
 	timeoutTime: 30,
+	widgetSyncFrequency: 1,
 };
 
-function addToTimer(ws: wsType, seconds: number) {
-	var amount = seconds || 0;
-	ws.timer += amount;
-	console.log(`adding ${amount} to ${ws.name}`);
+function addToEndTime(ws: wsType, seconds: number) {
+	ws.endTime += seconds;
+	console.log(`adding ${seconds} to ${ws.name}`);
 	syncTimer(ws);
 }
 
@@ -48,25 +49,34 @@ function startTMI(ws: wsType) {
 		"subgift",
 		(channel, username, streakMonths, recipient, methods, userstate) => {
 			var plan: string = userstate["msg-param-sub-plan"] || "";
-			addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
+			addToEndTime(
+				ws,
+				(plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.subTime
+			);
 		}
 	);
 
 	client.on("anongiftpaidupgrade", (_channel, _username, userstate) => {
 		var plan: string = userstate["msg-param-sub-plan"] || "";
-		addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
+		addToEndTime(
+			ws,
+			(plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.subTime
+		);
 	});
 
 	client.on("cheer", (_channel, userstate, _message) => {
 		var bits: string = userstate["bits"] || "";
-		addToTimer(ws, (parseInt(bits) / 100) * ws.dollar);
+		addToEndTime(ws, (parseInt(bits) / 100) * ws.dollarTime);
 	});
 
 	client.on(
 		"resub",
 		(_channel, _username, _months, _message, userstate, _methods) => {
 			var plan: string = userstate["msg-param-sub-plan"] || "";
-			addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
+			addToEndTime(
+				ws,
+				(plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.subTime
+			);
 		}
 	);
 
@@ -74,7 +84,10 @@ function startTMI(ws: wsType) {
 		"subscription",
 		(_channel, _username, _method, _message, userstate) => {
 			var plan: string = userstate["msg-param-sub-plan"] || "";
-			addToTimer(ws, (plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.sub);
+			addToEndTime(
+				ws,
+				(plan == "Prime" ? 1 : parseInt(plan) / 1000) * ws.subTime
+			);
 		}
 	);
 }
@@ -108,29 +121,23 @@ function connectStreamlabs(ws: wsType) {
 
 	ws.socket.on("event", (e: any) => {
 		if (e.type == "donation") {
-			var amount = 1 * e.message[0].amount * ws.dollar;
-			addToTimer(ws, amount);
+			var amount = e.message[0].amount * ws.dollarTime;
+			addToEndTime(ws, amount);
 		}
 	});
 }
 
-function lowerTimer(ws: wsType) {
-	if (ws.timer > 0) ws.timer -= 1;
-	pushToDb(ws);
-}
-
 async function syncTimer(ws: wsType) {
-	if (!Number.isInteger(ws.timer)) ws.timer = 0;
-	if (!ws.slStatus) ws.slStatus = false;
 	ws.send(
 		JSON.stringify({
 			success: true,
-			time: ws.timer,
-			sub: ws.sub,
-			dollar: ws.dollar,
+			endTime: ws.endTime,
+			subTime: ws.subTime,
+			dollarTime: ws.dollarTime,
 			slStatus: ws.slStatus,
 		})
 	);
+	pushToDb(ws);
 }
 
 async function login(ws: wsType, accessToken: string) {
@@ -152,9 +159,9 @@ async function login(ws: wsType, accessToken: string) {
 						userId: ws.userId,
 						name: ws.name,
 						accessToken: accessToken,
-						sub: defaultValues.sub,
-						dollar: defaultValues.dollar,
-						timer: 0,
+						subTime: defaultValues.sub,
+						dollarTime: defaultValues.dollar,
+						endTime: 0,
 					};
 					Object.assign(ws, newUser);
 					createUser(newUser);
@@ -175,15 +182,15 @@ async function login(ws: wsType, accessToken: string) {
 }
 
 async function pushToDb(ws: wsType) {
-	if (ws.userId)
+	if (ws.userId && ws.type !== "widget") {
 		Users.update(
 			{
 				name: ws.name,
 				accessToken: ws.accessToken,
-				sub: ws.sub,
-				dollar: ws.dollar,
+				subTime: ws.subTime,
+				dollarTime: ws.dollarTime,
 				slToken: ws.slToken,
-				timer: ws.timer,
+				endTime: ws.endTime,
 			},
 			{
 				where: {
@@ -191,6 +198,7 @@ async function pushToDb(ws: wsType) {
 				},
 			}
 		);
+	}
 }
 
 async function sendError(ws: wsType, message: string) {
@@ -209,40 +217,57 @@ function updateSetting(ws: wsType, data: any) {
 	switch (data.setting) {
 		case "subTime":
 			console.log(`setting ${ws.name} sub time to`, parseInt(data.value) || 60);
-			ws.sub = parseInt(data.value) || 60;
+			ws.subTime = parseInt(data.value) || 60;
 			break;
 		case "dollarTime":
 			console.log(
 				`setting ${ws.name} dollar time to`,
 				parseInt(data.value) || 60
 			);
-			ws.dollar = parseInt(data.value) || 15;
+			ws.dollarTime = parseInt(data.value) || 15;
 			break;
 	}
+}
+
+function syncWidget(ws: wsType) {
+	Users.findByPk(ws.userId).then((res: any) => {
+		if (ws.endTime !== res.dataValues.endTime) {
+			ws.endTime = res.dataValues.endTime;
+			syncTimer(ws);
+		}
+	});
 }
 
 function main() {
 	wss.on("connection", (ws: wsType, req: any) => {
 		ws.isAlive = true;
 		ws.on("pong", () => heartbeat(ws));
-
-		if (url.parse(req.url, true).query.token) {
+		var urlParams = url.parse(req.url, true).query;
+		if (urlParams.token) {
 			try {
-				login(ws, url.parse(req.url, true).query.token as string);
+				login(ws, urlParams.token as string);
 			} catch (error) {
 				sendError(ws, "invalid token.");
 				return 0;
 			}
 		}
 
-		const timerInterval = setInterval(() => {
-			lowerTimer(ws);
-		}, 1000);
+		if (
+			typeof urlParams["page"] == "string" &&
+			pages.includes(urlParams["page"])
+		)
+			ws.type = urlParams["page"];
+
+		if (ws.type == "widget")
+			var updateWidget = setInterval(
+				() => syncWidget(ws),
+				defaultValues.widgetSyncFrequency * 1000
+			);
 
 		ws.on("close", () => {
 			ws.isAlive = false;
 			console.log(`Disconnected from ${ws.name}`);
-			clearInterval(timerInterval);
+			clearInterval(updateWidget);
 		});
 
 		ws.onmessage = function (event: any) {
@@ -258,7 +283,7 @@ function main() {
 					syncTimer(ws);
 					break;
 				case "connectStreamlabs":
-					ws.slToken = data.slToken;
+					if (ws.slToken.length < 200) ws.slToken = data.slToken;
 					pushToDb(ws);
 					connectStreamlabs(ws);
 					break;
@@ -266,13 +291,10 @@ function main() {
 					updateSetting(ws, data);
 					pushToDb(ws);
 					break;
-				case "setTime":
-					ws.timer = parseInt(data.value) || 0;
+				case "setEndTime":
+					ws.endTime = parseInt(data.value) || 0;
 					pushToDb(ws);
 					syncTimer(ws);
-					break;
-				case "addTime":
-					addToTimer(ws, data.value);
 					break;
 			}
 		};
@@ -281,7 +303,9 @@ function main() {
 	const timeout = setInterval(function ping() {
 		wss.clients.forEach(function each(ws: any) {
 			if (ws.isAlive === false) return ws.terminate();
-			console.log(`pinging ${ws.name}`);
+			console.log(
+				`pinging ${ws.name} at ${ws.endTime - Math.trunc(Date.now() / 1000)}`
+			);
 
 			ws.isAlive = false;
 			ws.ping();

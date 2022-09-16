@@ -2,28 +2,24 @@ import Timer from "../Timer";
 import React, { useEffect, useState } from "react";
 import * as consts from "../Consts";
 
-const URL = consts.URL;
+const WS_URL = consts.WS_URL;
 let ws: WebSocket;
 
 const Widget: React.FC = () => {
 	const [seconds, setSeconds] = useState(0);
-
 	const [fetched, setFetched] = useState(false);
+	const updateSeconds = (endTime: number) =>
+		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
 
 	const connectWs = () => {
-		console.log("called");
-		ws = new WebSocket(`${URL}?token=${token}`);
+		ws = new WebSocket(`${WS_URL}?token=${token}&page=widget`);
 
 		ws.onmessage = (event: any) => {
 			const response = JSON.parse(event.data);
 			console.log(`received ${event.data}`);
 
-			if ("time" in response) {
-				const time =
-					typeof response.time === "number"
-						? response.time
-						: parseInt(response.time);
-				setSeconds(time);
+			if ("endTime" in response) {
+				updateSeconds(response.endTime);
 				if (!fetched) {
 					setFetched(true);
 				}
@@ -50,7 +46,6 @@ const Widget: React.FC = () => {
 		return () => ws.close();
 	}, []);
 
-	// bug: if zero then updated it doesnt decrease on screen
 	useEffect(() => {
 		const interval = setInterval(() => {
 			if (seconds > 0) {
@@ -60,7 +55,7 @@ const Widget: React.FC = () => {
 		return () => {
 			clearInterval(interval);
 		};
-	}, [fetched]);
+	}, [seconds]);
 
 	const token = new URLSearchParams(window.location.search).get("token");
 	if (token)
