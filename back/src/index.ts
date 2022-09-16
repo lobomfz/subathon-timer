@@ -20,6 +20,8 @@ const defaultValues = {
 };
 
 function addToEndTime(ws: wsType, seconds: number) {
+	const now = Math.trunc(Date.now() / 1000);
+	if (ws.endTime < now) ws.endTime = now;
 	ws.endTime += seconds;
 	console.log(`adding ${seconds} to ${ws.name}`);
 	syncTimer(ws);
