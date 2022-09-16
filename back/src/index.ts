@@ -283,7 +283,7 @@ function main() {
 					syncTimer(ws);
 					break;
 				case "connectStreamlabs":
-					if (data.slToken.length < 200) ws.slToken = data.slToken;
+					if (data.slToken.length < 300) ws.slToken = data.slToken;
 					pushToDb(ws);
 					connectStreamlabs(ws);
 					break;
