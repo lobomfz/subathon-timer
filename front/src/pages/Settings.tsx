@@ -4,7 +4,6 @@ import Timer from "../Timer";
 import * as consts from "../Consts";
 import TimingSettings from "./Settings/TimingSettings";
 import ChangeTime from "./Settings/ChangeTime";
-import HypeTrain from "./Settings/HypeTrain";
 import {
 	Spinner,
 	Tabs,
