@@ -17,6 +17,7 @@ const defaultValues = {
 	pushFrequency: 1,
 	timeoutTime: 30,
 	widgetSyncFrequency: 1,
+	forceSync: 60,
 };
 
 function addToEndTime(ws: wsType, seconds: number) {
@@ -127,6 +128,8 @@ function connectStreamlabs(ws: wsType) {
 			addToEndTime(ws, amount);
 		}
 	});
+
+	syncTimer(ws);
 }
 
 async function syncTimer(ws: wsType) {
@@ -266,10 +269,16 @@ function main() {
 				defaultValues.widgetSyncFrequency * 1000
 			);
 
+		var forceSync = setInterval(
+			() => syncTimer(ws),
+			defaultValues.forceSync * 1000
+		);
+
 		ws.on("close", () => {
 			ws.isAlive = false;
 			console.log(`Disconnected from ${ws.name}`);
-			clearInterval(updateWidget);
+			clearInterval(forceSync);
+			if (ws.type == "widget") clearInterval(updateWidget);
 		});
 
 		ws.onmessage = function (event: any) {

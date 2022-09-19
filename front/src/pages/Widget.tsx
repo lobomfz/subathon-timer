@@ -4,12 +4,20 @@ import * as consts from "../Consts";
 
 const WS_URL = consts.WS_URL;
 let ws: WebSocket;
+let forceSync: any;
 
 const Widget: React.FC = () => {
 	const [seconds, setSeconds] = useState(0);
 	const [fetched, setFetched] = useState(false);
-	const updateSeconds = (endTime: number) =>
+
+	const updateSeconds = (endTime: number) => {
+		console.log(
+			`Force syncing endtime to ${endTime} and seconds to ${
+				endTime - new Date().getTime() / 1000
+			} `
+		);
 		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
+	};
 
 	const connectWs = () => {
 		ws = new WebSocket(`${WS_URL}?token=${token}&page=widget`);
@@ -20,6 +28,18 @@ const Widget: React.FC = () => {
 
 			if ("endTime" in response) {
 				updateSeconds(response.endTime);
+				if (!forceSync)
+					forceSync = setInterval(
+						() => updateSeconds(response.endTime),
+						10 * 1000
+					);
+				else {
+					clearInterval(forceSync);
+					forceSync = setInterval(
+						() => updateSeconds(response.endTime),
+						10 * 1000
+					);
+				}
 				if (!fetched) {
 					setFetched(true);
 				}

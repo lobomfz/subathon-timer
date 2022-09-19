@@ -4,6 +4,7 @@ import Timer from "../Timer";
 import * as consts from "../Consts";
 import TimingSettings from "./Settings/TimingSettings";
 import ChangeTime from "./Settings/ChangeTime";
+import HypeTrain from "./Settings/HypeTrain";
 import {
 	Spinner,
 	Tabs,
@@ -19,6 +20,7 @@ const WS_URL = consts.WS_URL;
 const BASE_URL = consts.BASE_URL;
 
 let ws: WebSocket;
+let forceSync: any;
 
 const Settings: React.FC = () => {
 	const [settings, setSettings] = useState({ slStatus: false });
@@ -29,12 +31,16 @@ const Settings: React.FC = () => {
 	const token = new URLSearchParams(window.location.search).get("token");
 
 	const updateSeconds = (endTime: number) => {
+		console.log(
+			`Force syncing endtime to ${endTime} and seconds to ${
+				endTime - new Date().getTime() / 1000
+			} `
+		);
 		setEndTime(endTime);
 		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
 	};
 
 	const connectWs = () => {
-		console.log("called");
 		ws = new WebSocket(`${WS_URL}?token=${token}&page=settings`);
 
 		ws.onmessage = (event: any) => {
@@ -46,6 +52,18 @@ const Settings: React.FC = () => {
 				updateSeconds(response.endTime);
 				if (!fetched) {
 					setFetched(true);
+				}
+				if (!forceSync)
+					forceSync = setInterval(
+						() => updateSeconds(response.endTime),
+						10 * 1000
+					);
+				else {
+					clearInterval(forceSync);
+					forceSync = setInterval(
+						() => updateSeconds(response.endTime),
+						10 * 1000
+					);
 				}
 			} else if ("error" in response) {
 				console.log(`error: ${response.data}`);
