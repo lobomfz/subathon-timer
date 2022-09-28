@@ -23,3 +23,24 @@ export interface wsType extends WebSocket {
 	on: (event: string, listener: (data: any) => void) => void;
 	type: string;
 }
+
+export interface initialUser {
+	page: string;
+	accessToken: string;
+}
+
+export interface currentUserType {
+	page: string;
+	name: string;
+	intervals: any;
+	endTime: number;
+	subTime: number;
+	dollarTime: number;
+	slStatus: boolean;
+	slSocket?: any;
+	slToken?: string;
+	userId: number;
+	accessToken: string;
+	send: any;
+	isAlive: boolean;
+}

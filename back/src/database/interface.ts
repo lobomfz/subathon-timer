@@ -1,5 +1,4 @@
 import { Sequelize, DataTypes } from "sequelize";
-import { user } from "./types.js";
 
 const sequelize = new Sequelize(
 	process.env.DB_SCHEMA || "postgres",
@@ -48,19 +47,6 @@ export const Users = sequelize.define("User", {
 		allowNull: false,
 	},
 });
-
-export async function createUser(user: user) {
-	console.log;
-	Users.create({
-		userId: user.userId,
-		name: user.name,
-		accessToken: user.accessToken,
-		subTime: user.subTime,
-		dollarTime: user.dollarTime,
-		slToken: user.slToken,
-		endTime: user.endTime,
-	});
-}
 
 async function main() {
 	try {

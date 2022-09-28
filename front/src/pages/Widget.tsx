@@ -9,6 +9,7 @@ let forceSync: any;
 const Widget: React.FC = () => {
 	const [seconds, setSeconds] = useState(0);
 	const [fetched, setFetched] = useState(false);
+	const [endTime, setEndTime] = useState(0);
 
 	const updateSeconds = (endTime: number) => {
 		console.log(
@@ -16,6 +17,7 @@ const Widget: React.FC = () => {
 				endTime - new Date().getTime() / 1000
 			} `
 		);
+		setEndTime(endTime);
 		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
 	};
 
@@ -69,7 +71,7 @@ const Widget: React.FC = () => {
 	useEffect(() => {
 		const interval = setInterval(() => {
 			if (seconds > 0) {
-				setSeconds((prev) => prev - 1);
+				setSeconds(Math.round(endTime - new Date().getTime() / 1000));
 			}
 		}, 1000);
 		return () => {

@@ -52,18 +52,6 @@ const Settings: React.FC = () => {
 				if (!fetched) {
 					setFetched(true);
 				}
-				if (!forceSync)
-					forceSync = setInterval(
-						() => updateSeconds(response.endTime),
-						10 * 1000
-					);
-				else {
-					clearInterval(forceSync);
-					forceSync = setInterval(
-						() => updateSeconds(response.endTime),
-						10 * 1000
-					);
-				}
 			} else if ("error" in response) {
 				console.log(`error: ${response.data}`);
 			}
@@ -90,7 +78,7 @@ const Settings: React.FC = () => {
 	useEffect(() => {
 		const interval = setInterval(() => {
 			if (seconds > 0) {
-				setSeconds((prev) => prev - 1);
+				setSeconds(Math.round(endTime - new Date().getTime() / 1000));
 			}
 		}, 1000);
 		return () => {
@@ -104,7 +92,8 @@ const Settings: React.FC = () => {
 				style={{
 					margin: "auto",
 					textAlign: "center",
-					width: "40%",
+					minWidth: "800px",
+					maxWidth: "1280px",
 					marginTop: "0%",
 				}}
 			>

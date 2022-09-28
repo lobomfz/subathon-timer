@@ -14,7 +14,6 @@ export function setSetting(ws: WebSocket, setting: string, value: number) {
 			value: value,
 		})
 	);
-	sync(ws);
 	return 1;
 }
 
@@ -25,7 +24,6 @@ export function connectSl(ws: WebSocket, socketToken: string) {
 			slToken: socketToken,
 		})
 	);
-	sync(ws);
 	return 1;
 }
 
@@ -48,6 +46,5 @@ export function setEndTime(ws: WebSocket, endTime: number) {
 			value: endTime,
 		})
 	);
-	sync(ws);
 	return 1;
 }
