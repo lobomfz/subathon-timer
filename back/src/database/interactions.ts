@@ -2,7 +2,6 @@ import { user, currentUserType } from "../types";
 import { Users } from "./interface";
 import { startTMI } from "../connections/twitch";
 import { syncTimer } from "../connections/frontend";
-import { connectStreamlabs } from "../connections/streamlabs";
 import { safeValue } from "../timer/operations";
 
 function parseCurrentUser(currentUser: currentUserType) {
@@ -76,12 +75,12 @@ export async function loadUser(currentUser: currentUserType, id: number) {
 	Users.findByPk(currentUser.userId).then((res: any) => {
 		if (!res) {
 			createUser(currentUser);
-			startTMI(currentUser);
+			//startTMI(currentUser);
 		} else {
 			Object.assign(currentUser, res.dataValues);
-			if (currentUser.slToken) connectStreamlabs(currentUser);
-			else syncTimer(currentUser);
-			startTMI(currentUser);
+			// if (currentUser.slToken) connectStreamlabs(currentUser);
+			// else syncTimer(currentUser);
+			//startTMI(currentUser);
 		}
 	});
 }

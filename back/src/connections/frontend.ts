@@ -1,8 +1,8 @@
-import { currentUserType, wsType } from "../types";
+import { currentUserType, wsType, userConfigsType } from "../types";
 import { Users } from "../database/interface";
 import { updateSetting } from "../database/interactions";
-import { setEndTime } from "../timer/operations";
-import { connectStreamlabs } from "../connections/streamlabs";
+import { setEndTime, addToEndTime } from "../timer/operations";
+import { userConfig } from "../cache/cache";
 
 export async function sendError(currentUser: currentUserType, message: string) {
 	currentUser.send(
@@ -24,49 +24,59 @@ export function syncFromDb(currentUser: currentUserType) {
 	}
 }
 
-export async function syncTimer(currentUser: currentUserType) {
+export async function syncTimer(ws: wsType, userId: number) {
+	if (!userConfig.has(userId)) return 0;
+
+	var userConfigs = userConfig.get(userId) as userConfigsType;
+
 	console.log(
-		`trying to send to ${currentUser.name} on ${currentUser.page} endtime: ${currentUser.endTime}`
+		`trying to send to ${userConfigs.name} on ${ws.page} endtime: ${userConfigs.endTime}`
 	);
-	currentUser.send(
+
+	ws.send(
 		JSON.stringify({
 			success: true,
-			endTime: currentUser.endTime,
-			subTime: currentUser.subTime,
-			dollarTime: currentUser.dollarTime,
-			slStatus: currentUser.slStatus,
+			endTime: userConfigs.endTime,
+			subTime: userConfigs.subTime,
+			dollarTime: userConfigs.dollarTime,
+			slStatus: userConfigs.slStatus,
 		})
 	);
 }
 
-export function frontListener(ws: wsType, currentUser: currentUserType) {
+export function frontListener(ws: wsType, userId: number) {
 	ws.onmessage = function (event: any) {
+		var userConfigs = userConfig.get(userId) as userConfigsType;
+
 		try {
 			var data = JSON.parse(event.data);
 		} catch (error) {
-			sendError(currentUser.send, "json error");
+			// sendError(ws.send, "json error");
 			return 0;
 		}
 		console.log(
-			`received from ${currentUser.name} on ${currentUser.page}:`,
+			`received from ${userConfigs.name} on ${ws.page}:`,
 			JSON.stringify(event.data)
 		);
 
 		switch (data.event) {
 			case "getTime":
-				syncTimer(currentUser);
+				// syncTimer(currentUser);
 				break;
 			case "connectStreamlabs":
-				if (data.slToken.length < 300) currentUser.slToken = data.slToken;
-				connectStreamlabs(currentUser);
+				if (data.slToken.length < 300) userConfigs.slToken = data.slToken;
+				//connectStreamlabs(currentUser);
 				break;
 			case "setSetting":
-				updateSetting(currentUser, data);
+				// updateSetting(userConfigs, data);
 				break;
 			case "setEndTime":
-				if (data.value) setEndTime(currentUser, data.value);
+				if (data.value) setEndTime(userConfigs.userId, data.value);
+				break;
+			case "addTime":
+				if (data.value) addToEndTime(userConfigs.userId, data.value);
 				break;
 		}
-		syncTimer(currentUser);
+		syncTimer(ws, userId);
 	};
 }

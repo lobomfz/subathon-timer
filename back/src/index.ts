@@ -3,9 +3,11 @@ import WebSocket from "ws";
 import { wsType, currentUserType, initialUser } from "./types.js";
 import { portWss, pages } from "./config/serverSettings.js";
 import { defaultValues } from "./config/userSettings.js";
-import { login } from "./connections/twitch.js";
 import { sendError, syncTimer, frontListener } from "./connections/frontend.js";
 import { initializePage, closePage } from "./timer/setup.js";
+import { tryToLoadUser, addUserToCache } from "./cache/cache.js";
+import { getUserInfo } from "./connections/twitch.js";
+import { tryToStartTmi, tryToStartStreamlabs } from "./cache/listeners.js";
 
 const wss = new WebSocket.Server({ port: portWss });
 
@@ -20,40 +22,71 @@ function main() {
 
 		var urlParams = url.parse(req.url, true).query;
 
-		var currentUser: currentUserType;
-		var initialUser: initialUser = {
-			page:
-				typeof urlParams["page"] == "string" &&
-				pages.includes(urlParams["page"])
-					? urlParams["page"]
-					: "other",
-			accessToken: urlParams["token"]?.toString() || "",
-		};
+		ws.page =
+			typeof urlParams["page"] == "string" && pages.includes(urlParams["page"])
+				? urlParams["page"]
+				: "other";
 
-		console.log(
-			`New connection from ${initialUser.page}, token: ${initialUser.accessToken}`
-		);
+		var token = urlParams["token"]?.toString() || null;
 
-		login(ws, initialUser).then((res: any) => {
-			if (res == 0) {
-				sendError(ws as any, "invalid token.");
-				return 0;
-			}
+		if (token)
+			getUserInfo(token)
+				.then((userInfo: any) => {
+					tryToLoadUser(userInfo.userId)
+						.then((loadedUser: any) => {
+							// logged in and found cached user
+							console.log(`loaded user: ${JSON.stringify(loadedUser)}`);
+							tryToStartTmi(loadedUser.userId);
+							tryToStartStreamlabs(userInfo.userId);
+							frontListener(ws, loadedUser.userId);
+							syncTimer(ws, userInfo.userId);
+						})
 
-			currentUser = res;
+						.catch((err: any) => {
+							// not in cache, but logged in
+							console.log(
+								`not found in cache: ${err}, but logged in: ${JSON.stringify(
+									userInfo
+								)}`
+							);
 
-			initializePage(currentUser);
-			syncTimer(currentUser);
+							addUserToCache(userInfo);
+							tryToStartTmi(userInfo.userId);
+							tryToStartStreamlabs(userInfo.userId);
+							frontListener(ws, userInfo.userId);
+							syncTimer(ws, userInfo.userId);
+						});
+				})
 
-			ws.on("close", () => {
-				ws.isAlive = false;
-				currentUser.isAlive = false;
-				console.log(`Disconnected from ${ws.name}`);
-				closePage(currentUser);
-			});
+				.catch((err: any) => {
+					// not logged in
+					console.log(`failed to login: ${err}`);
+				});
+		else {
+			ws.send("missing token");
+			ws.close();
+		}
 
-			frontListener(ws, currentUser);
-		});
+		// login(ws, initialUser).then((res: any) => {
+		// 	if (res == 0) {
+		// 		sendError(ws as any, "invalid token.");
+		// 		return 0;
+		// 	}
+		//
+		// 	currentUser = res;
+		//
+		// 	initializePage(currentUser);
+		// 	syncTimer(currentUser);
+		//
+		// 	ws.on("close", () => {
+		// 		ws.isAlive = false;
+		// 		currentUser.isAlive = false;
+		// 		console.log(`Disconnected from ${ws.name}`);
+		// 		closePage(currentUser);
+		// 	});
+		//
+		// 	frontListener(ws, currentUser);
+		// });
 	});
 
 	const timeout = setInterval(function ping() {

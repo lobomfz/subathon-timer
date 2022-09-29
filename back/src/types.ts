@@ -9,6 +9,7 @@ export type user = {
 };
 
 export interface wsType extends WebSocket {
+	page: string;
 	endTime: number;
 	name: string;
 	isAlive: boolean;
@@ -43,4 +44,16 @@ export interface currentUserType {
 	accessToken: string;
 	send: any;
 	isAlive: boolean;
+}
+
+export interface userConfigsType {
+	tmi?: any;
+	name: string;
+	userId: number;
+	slToken?: string;
+	slSocket?: any;
+	slStatus: boolean;
+	endTime: number;
+	subTime: number;
+	dollarTime: number;
 }

@@ -4,10 +4,10 @@ import { syncTimer, syncFromDb } from "../connections/frontend.js";
 import { pushToDb } from "../database/interactions.js";
 
 export function initializePage(currentUser: currentUserType) {
-	currentUser.intervals.forceSync = setInterval(
-		() => syncTimer(currentUser),
-		defaultValues.forceSync * 1000
-	);
+	// currentUser.intervals.forceSync = setInterval(
+	// 	() => syncTimer(currentUser),
+	// 	defaultValues.forceSync * 1000
+	// );
 
 	switch (currentUser.page) {
 		case "settings":
