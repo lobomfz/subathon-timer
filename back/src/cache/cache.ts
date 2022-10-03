@@ -4,8 +4,10 @@ import { userConfigsType } from "../types";
 export const userConfig = new NodeCache();
 
 export async function tryToLoadUser(userId: number) {
+	// TODO: add postgres
+
 	return new Promise(function (resolve, reject) {
-		const user = userConfig.has(userId);
+		const user = userConfig.get(userId) as userConfigsType;
 
 		if (user) resolve(user);
 		reject("user not found");
@@ -13,13 +15,14 @@ export async function tryToLoadUser(userId: number) {
 }
 
 export async function addUserToCache(userInfo: any) {
-	// ignoring postgres for now
+	// TODO: add postgres
 
 	var newUser = {
 		endTime: 0,
 		subTime: 60,
 		dollarTime: 15,
 		slStatus: false,
+		intervals: {},
 	};
 
 	Object.assign(userInfo, newUser);

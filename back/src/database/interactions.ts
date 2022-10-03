@@ -1,7 +1,5 @@
 import { user, currentUserType } from "../types";
 import { Users } from "./interface";
-import { startTMI } from "../connections/twitch";
-import { syncTimer } from "../connections/frontend";
 import { safeValue } from "../timer/operations";
 
 function parseCurrentUser(currentUser: currentUserType) {
@@ -29,10 +27,10 @@ export async function pushToDb(currentUser: currentUserType) {
 			{
 				name: currentUser.name,
 				accessToken: currentUser.accessToken,
-				subTime: currentUser.subTime,
-				dollarTime: currentUser.dollarTime,
+				subTime: Math.floor(currentUser.subTime),
+				dollarTime: Math.floor(currentUser.dollarTime),
 				slToken: currentUser.slToken,
-				endTime: currentUser.endTime,
+				endTime: Math.floor(currentUser.endTime),
 			},
 			{
 				where: {

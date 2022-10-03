@@ -1,19 +1,22 @@
 import url from "url";
 import WebSocket from "ws";
-import { wsType, currentUserType, initialUser } from "./types.js";
-import { portWss, pages } from "./config/serverSettings.js";
-import { defaultValues } from "./config/userSettings.js";
-import { sendError, syncTimer, frontListener } from "./connections/frontend.js";
-import { initializePage, closePage } from "./timer/setup.js";
-import { tryToLoadUser, addUserToCache } from "./cache/cache.js";
-import { getUserInfo } from "./connections/twitch.js";
-import { tryToStartTmi, tryToStartStreamlabs } from "./cache/listeners.js";
+import { wsType } from "./types";
+import { portWss, pages } from "./config/serverSettings";
+import { defaultValues } from "./config/userSettings";
+import { initializePage } from "./timer/setup";
+import { tryToLoadUser, addUserToCache } from "./cache/cache";
+import { getUserInfo } from "./connections/twitch";
+// TODO: tsc debugging setup
 
 const wss = new WebSocket.Server({ port: portWss });
 
 function heartbeat(ws: wsType) {
 	ws.isAlive = true;
 }
+
+console.log("debug!");
+
+console.log("debug2!");
 
 function main() {
 	wss.on("connection", (ws: wsType, req: any) => {
@@ -35,64 +38,31 @@ function main() {
 					tryToLoadUser(userInfo.userId)
 						.then((loadedUser: any) => {
 							// logged in and found cached user
-							console.log(`loaded user: ${JSON.stringify(loadedUser)}`);
-							tryToStartTmi(loadedUser.userId);
-							tryToStartStreamlabs(userInfo.userId);
-							frontListener(ws, loadedUser.userId);
-							syncTimer(ws, userInfo.userId);
+							console.log("found cached user");
+							initializePage(ws, loadedUser);
 						})
 
 						.catch((err: any) => {
 							// not in cache, but logged in
-							console.log(
-								`not found in cache: ${err}, but logged in: ${JSON.stringify(
-									userInfo
-								)}`
-							);
-
+							console.log("not in cache, but logged in");
 							addUserToCache(userInfo);
-							tryToStartTmi(userInfo.userId);
-							tryToStartStreamlabs(userInfo.userId);
-							frontListener(ws, userInfo.userId);
-							syncTimer(ws, userInfo.userId);
+							initializePage(ws, userInfo);
 						});
 				})
 
 				.catch((err: any) => {
-					// not logged in
+					// TODO: handle login error
 					console.log(`failed to login: ${err}`);
 				});
 		else {
 			ws.send("missing token");
 			ws.close();
 		}
-
-		// login(ws, initialUser).then((res: any) => {
-		// 	if (res == 0) {
-		// 		sendError(ws as any, "invalid token.");
-		// 		return 0;
-		// 	}
-		//
-		// 	currentUser = res;
-		//
-		// 	initializePage(currentUser);
-		// 	syncTimer(currentUser);
-		//
-		// 	ws.on("close", () => {
-		// 		ws.isAlive = false;
-		// 		currentUser.isAlive = false;
-		// 		console.log(`Disconnected from ${ws.name}`);
-		// 		closePage(currentUser);
-		// 	});
-		//
-		// 	frontListener(ws, currentUser);
-		// });
 	});
 
 	const timeout = setInterval(function ping() {
 		wss.clients.forEach(function each(ws: any) {
 			if (ws.isAlive === false) return ws.terminate();
-
 			ws.isAlive = false;
 			ws.ping();
 		});

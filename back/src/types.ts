@@ -56,4 +56,5 @@ export interface userConfigsType {
 	endTime: number;
 	subTime: number;
 	dollarTime: number;
+	intervals?: any;
 }

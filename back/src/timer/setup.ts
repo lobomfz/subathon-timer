@@ -1,28 +1,37 @@
-import { currentUserType } from "../types.js";
-import { defaultValues } from "../config/userSettings.js";
-import { syncTimer, syncFromDb } from "../connections/frontend.js";
-import { pushToDb } from "../database/interactions.js";
+import { currentUserType, userConfigsType, wsType } from "../types";
+import { defaultValues } from "../config/userSettings";
+import { syncTimer, syncFromDb } from "../connections/frontend";
+import { tryToStartTmi, tryToStartStreamlabs } from "../cache/listeners";
+import { frontListener } from "../connections/frontend";
 
-export function initializePage(currentUser: currentUserType) {
-	// currentUser.intervals.forceSync = setInterval(
-	// 	() => syncTimer(currentUser),
-	// 	defaultValues.forceSync * 1000
-	// );
+export function initializePage(ws: wsType, userConfigs: userConfigsType) {
+	tryToStartTmi(userConfigs.userId);
 
-	switch (currentUser.page) {
-		case "settings":
-			currentUser.intervals.pushToDbInterval = setInterval(
-				() => pushToDb(currentUser),
-				1000
-			);
-			break;
-		case "widget":
-			currentUser.intervals.syncFromDb = setInterval(
-				() => syncFromDb(currentUser),
-				defaultValues.widgetSyncFrequency * 1000
-			);
-			break;
-	}
+	tryToStartStreamlabs(userConfigs.userId);
+
+	frontListener(ws, userConfigs.userId);
+
+	syncTimer(ws, userConfigs.userId);
+
+	userConfigs.intervals.forceSync = setInterval(
+		() => syncTimer(ws, userConfigs.userId),
+		defaultValues.forceSync * 1000
+	);
+
+	// switch (currentUser.page) {
+	// 	case "settings":
+	// 		currentUser.intervals.pushToDbInterval = setInterval(
+	// 			() => pushToDb(currentUser),
+	// 			1000
+	// 		);
+	// 		break;
+	// 	case "widget":
+	// 		currentUser.intervals.syncFromDb = setInterval(
+	// 			() => syncFromDb(currentUser),
+	// 			defaultValues.widgetSyncFrequency * 1000
+	// 		);
+	// 		break;
+	// }
 }
 
 export function closePage(currentUser: currentUserType) {

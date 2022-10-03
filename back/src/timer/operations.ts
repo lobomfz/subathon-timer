@@ -1,5 +1,5 @@
-import { currentUserType } from "../types.js";
-import { userConfig, updateUserConfig } from "../cache/cache.js";
+import { currentUserType } from "../types";
+import { userConfig, updateUserConfig } from "../cache/cache";
 
 export function addToEndTime(userId: number, seconds: number | string) {
 	var currentUser = userConfig.get(userId) as currentUserType;
