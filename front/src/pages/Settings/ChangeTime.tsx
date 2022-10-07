@@ -96,7 +96,7 @@ const ChangeTime: React.FC<{ ws: any; endTime: number }> = ({
 							</NumberInput>
 							<Button
 								onClick={() => {
-									addTime(ws, endTime, Seconds);
+									addTime(ws, Seconds);
 								}}
 								colorScheme='purple'
 								width='60%'
@@ -121,7 +121,7 @@ const ChangeTime: React.FC<{ ws: any; endTime: number }> = ({
 							</NumberInput>
 							<Button
 								onClick={() => {
-									addTime(ws, endTime, Minutes * 60);
+									addTime(ws, Minutes * 60);
 								}}
 								colorScheme='purple'
 								width='60%'
@@ -146,7 +146,7 @@ const ChangeTime: React.FC<{ ws: any; endTime: number }> = ({
 							</NumberInput>
 							<Button
 								onClick={() => {
-									addTime(ws, endTime, Hours * 60 * 60);
+									addTime(ws, Hours * 60 * 60);
 								}}
 								colorScheme='purple'
 								width='

@@ -30,11 +30,6 @@ const Settings: React.FC = () => {
 	const token = new URLSearchParams(window.location.search).get("token");
 
 	const updateSeconds = (endTime: number) => {
-		console.log(
-			`Force syncing endtime to ${endTime} and seconds to ${
-				endTime - new Date().getTime() / 1000
-			} `
-		);
 		setEndTime(endTime);
 		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
 	};

@@ -1,11 +1,3 @@
-export function sync(ws: WebSocket) {
-	ws.send(
-		JSON.stringify({
-			event: "getTime",
-		})
-	);
-	return 1;
-}
 export function setSetting(ws: WebSocket, setting: string, value: number) {
 	ws.send(
 		JSON.stringify({
@@ -27,14 +19,13 @@ export function connectSl(ws: WebSocket, socketToken: string) {
 	return 1;
 }
 
-export function addTime(
-	ws: WebSocket,
-	currentEndTime: number,
-	seconds: number
-) {
-	const now = Math.trunc(new Date().getTime() / 1000);
-	if (currentEndTime < now) currentEndTime = now;
-	setEndTime(ws, currentEndTime + seconds);
+export function addTime(ws: WebSocket, seconds: number) {
+	ws.send(
+		JSON.stringify({
+			event: "addTime",
+			value: seconds,
+		})
+	);
 	return 1;
 }
 

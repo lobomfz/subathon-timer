@@ -1,39 +1,32 @@
-import { currentUserType } from "../types";
 import io from "socket.io-client";
-import { addToEndTime } from "../timer/operations";
+import { addDollar } from "./twitch";
+import { userConfig, updateUserConfig, getUserConfigs } from "../cache/cache";
 
-export function connectStreamlabs(currentUser: currentUserType) {
-	if (currentUser.slSocket) currentUser.slSocket.disconnect();
-	if (!currentUser.slToken) return 0;
+export function startStreamlabs(userId: number) {
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 
-	console.log(`connecting to ${currentUser.name} sl`);
+	if (userConfigs.slToken) {
+		console.log(`connecting to ${userConfigs.name} streamlabs`);
 
-	var aliveCheck = setInterval(() => {
-		if (!currentUser.isAlive) {
-			currentUser.slSocket.disconnect();
-			clearInterval(aliveCheck);
-			return 0;
-		}
-	}, 1000);
+		const slSocket = io(
+			`https://sockets.streamlabs.com?token=${userConfigs.slToken}`,
+			{
+				transports: ["websocket"],
+			}
+		);
 
-	currentUser.slSocket = io(
-		`https://sockets.streamlabs.com?token=${currentUser.slToken}`,
-		{
-			transports: ["websocket"],
-		}
-	);
+		slSocket.on("connect", () => {
+			console.log(`connected to ${userConfigs.name} sl`);
+			updateUserConfig(userId, "slStatus", true);
+		});
 
-	currentUser.slSocket.on("connect", () => {
-		console.log(`connected to ${currentUser.name} sl`);
-		currentUser.slStatus = true;
-	});
+		slSocket.on("disconnect", () => {
+			updateUserConfig(userId, "slStatus", false);
+		});
 
-	currentUser.slSocket.on("disconnect", () => {
-		currentUser.slStatus = false;
-	});
-
-	currentUser.slSocket.on("event", (e: any) => {
-		if (e.type == "donation")
-			addToEndTime(currentUser, e.message[0].amount * currentUser.dollarTime);
-	});
+		slSocket.on("event", (e: any) => {
+			if (e.type == "donation") addDollar(userId, e.message[0].amount);
+		});
+	}
 }

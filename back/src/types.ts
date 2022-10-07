@@ -9,19 +9,10 @@ export type user = {
 };
 
 export interface wsType extends WebSocket {
-	endTime: number;
-	name: string;
+	page: string;
+	frontInfo: any;
 	isAlive: boolean;
-	subTime: number;
-	socket: SocketIOClient.Socket;
-	slToken: string;
-	dollarTime: number;
-	slStatus: boolean;
-	userId: number;
-	initialized: boolean;
-	accessToken: string;
 	on: (event: string, listener: (data: any) => void) => void;
-	type: string;
 }
 
 export interface initialUser {
@@ -29,18 +20,15 @@ export interface initialUser {
 	accessToken: string;
 }
 
-export interface currentUserType {
-	page: string;
+export interface userConfigsType {
+	tmi?: any;
 	name: string;
-	intervals: any;
+	userId: number;
+	slToken?: string;
+	slSocket?: any;
+	slStatus: boolean;
 	endTime: number;
 	subTime: number;
 	dollarTime: number;
-	slStatus: boolean;
-	slSocket?: any;
-	slToken?: string;
-	userId: number;
-	accessToken: string;
-	send: any;
-	isAlive: boolean;
+	intervals?: any;
 }

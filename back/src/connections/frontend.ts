@@ -1,72 +1,97 @@
-import { currentUserType, wsType } from "../types";
-import { Users } from "../database/interface";
+import { wsType } from "../types";
 import { updateSetting } from "../database/interactions";
-import { setEndTime } from "../timer/operations";
-import { connectStreamlabs } from "../connections/streamlabs";
+import { setEndTime, addToEndTime } from "../timer/operations";
+import { getUserConfigs, userConfig } from "../cache/cache";
+import { tryToStartStreamlabs } from "../cache/listeners";
 
-export async function sendError(currentUser: currentUserType, message: string) {
-	currentUser.send(
+export async function sendError(ws: wsType, message: string) {
+	return ws.send(
 		JSON.stringify({
 			error: message,
 		})
 	);
 }
 
-export function syncFromDb(currentUser: currentUserType) {
-	switch (currentUser.page) {
-		case "widget":
-			Users.findByPk(currentUser.userId).then((res: any) => {
-				if (res && currentUser.endTime !== res.dataValues.endTime) {
-					currentUser.endTime = res.dataValues.endTime;
-				}
-			});
-			break;
-	}
-}
+export async function syncTimer(ws: wsType, userId: number) {
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 
-export async function syncTimer(currentUser: currentUserType) {
+	Object.assign(ws.frontInfo, userConfigs);
+
 	console.log(
-		`trying to send to ${currentUser.name} on ${currentUser.page} endtime: ${currentUser.endTime}`
+		`trying to send to ${userConfigs.name} on ${ws.page} endtime: ${userConfigs.endTime}`
 	);
-	currentUser.send(
+
+	ws.send(
 		JSON.stringify({
 			success: true,
-			endTime: currentUser.endTime,
-			subTime: currentUser.subTime,
-			dollarTime: currentUser.dollarTime,
-			slStatus: currentUser.slStatus,
+			endTime: userConfigs.endTime,
+			subTime: userConfigs.subTime,
+			dollarTime: userConfigs.dollarTime,
+			slStatus: userConfigs.slStatus,
 		})
 	);
+	return true;
 }
 
-export function frontListener(ws: wsType, currentUser: currentUserType) {
+// checks if frontend is synced, if not, syncs.
+export async function tryToSyncTimer(ws: wsType, userId: number) {
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
+
+	// TODO: add a way to check without having to compare all the values manually
+	if (
+		ws.frontInfo.endTime !== userConfigs.endTime ||
+		ws.frontInfo.dollarTime !== userConfigs.dollarTime ||
+		ws.frontInfo.subTime !== userConfigs.subTime ||
+		ws.frontInfo.slStatus !== userConfigs.slStatus
+	) {
+		console.log("desynced, syncing");
+		return syncTimer(ws, userId);
+	}
+	return false;
+}
+
+export function frontListener(ws: wsType, userId: number) {
+	// TODO: finish this
 	ws.onmessage = function (event: any) {
+		if (!userConfig.has(userId)) return false;
+		var userConfigs = getUserConfigs(userId);
+
 		try {
 			var data = JSON.parse(event.data);
 		} catch (error) {
-			sendError(currentUser.send, "json error");
-			return 0;
+			sendError(ws, "json error");
+			return false;
 		}
 		console.log(
-			`received from ${currentUser.name} on ${currentUser.page}:`,
+			`received from ${userConfigs.name} on ${ws.page}:`,
 			JSON.stringify(event.data)
 		);
 
 		switch (data.event) {
 			case "getTime":
-				syncTimer(currentUser);
+				syncTimer(ws, userId);
 				break;
 			case "connectStreamlabs":
-				if (data.slToken.length < 300) currentUser.slToken = data.slToken;
-				connectStreamlabs(currentUser);
+				if (data.slToken.length < 300) {
+					updateSetting(userConfigs.userId, "slToken", data.slToken);
+					tryToStartStreamlabs(userConfigs.userId);
+				}
 				break;
 			case "setSetting":
-				updateSetting(currentUser, data);
+				updateSetting(userConfigs.userId, data.setting, data.value);
 				break;
 			case "setEndTime":
-				if (data.value) setEndTime(currentUser, data.value);
+				if (data.value) setEndTime(userConfigs.userId, data.value);
+				break;
+			case "addTime":
+				if (data.value) addToEndTime(userConfigs.userId, data.value);
 				break;
 		}
-		syncTimer(currentUser);
+		syncTimer(ws, userId);
 	};
+}
+function connectStreamlabs(currentUser: any) {
+	throw new Error("Function not implemented.");
 }

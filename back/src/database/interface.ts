@@ -26,10 +26,6 @@ export const Users = sequelize.define("User", {
 		type: DataTypes.STRING,
 		allowNull: false,
 	},
-	accessToken: {
-		type: DataTypes.STRING,
-		allowNull: false,
-	},
 	subTime: {
 		type: DataTypes.INTEGER,
 		allowNull: false,

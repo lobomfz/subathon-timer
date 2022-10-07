@@ -1,33 +1,31 @@
-import { currentUserType } from "../types.js";
+import { userConfig, updateUserConfig, getUserConfigs } from "../cache/cache";
 
-export function addToEndTime(
-	currentUser: currentUserType,
-	seconds: number | string
-) {
+export function addToEndTime(userId: number, seconds: number | string) {
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
+
 	if (typeof seconds == "string") seconds = parseInt(seconds) || 0;
-	if (!safeValue(seconds + currentUser.endTime)) return 0;
+
+	const finalTime = seconds + userConfigs.endTime;
+	if (!safeValue(finalTime)) return false;
 
 	const now = Math.trunc(Date.now() / 1000);
-	if (currentUser.endTime < now) currentUser.endTime = now;
-	currentUser.endTime += seconds;
-	console.log(`adding ${seconds} to ${currentUser.name}`);
+
+	if (userConfigs.endTime < now) userConfigs.endTime = now + seconds;
+	else userConfigs.endTime = finalTime;
+
+	console.log(`adding ${seconds} to ${userConfigs.name}`);
+	return updateUserConfig(userConfigs.userId, "endTime", userConfigs.endTime);
 }
 
-export function setEndTime(
-	currentUser: currentUserType,
-	endTime: number | string
-) {
-	if (typeof endTime == "string") endTime = parseInt(endTime) || 0;
-	if (!safeValue(endTime)) return 0;
-
-	currentUser.endTime = endTime;
-	console.log(`settings endTime to ${endTime}`);
+export function setEndTime(userId: number, endTime: number) {
+	updateUserConfig(userId, "endTime", endTime);
 }
 
 export function safeValue(value: number) {
-	if (value > 2147483647 && value < -2147483648) {
-		console.log(`User tried setting a value that was too large or small.`);
-		return 0;
-	}
-	return 1;
+	if (value < 2147483647 && value > -2147483648) return true;
+	console.log(
+		`User tried setting a value that was too large or small: ${value}`
+	);
+	return false;
 }

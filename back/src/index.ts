@@ -1,11 +1,16 @@
 import url from "url";
 import WebSocket from "ws";
-import { wsType, currentUserType, initialUser } from "./types.js";
-import { portWss, pages } from "./config/serverSettings.js";
-import { defaultValues } from "./config/userSettings.js";
-import { login } from "./connections/twitch.js";
-import { sendError, syncTimer, frontListener } from "./connections/frontend.js";
-import { initializePage, closePage } from "./timer/setup.js";
+import { wsType } from "./types";
+import { portWss, pages } from "./config/serverSettings";
+import { defaultValues } from "./config/userSettings";
+import { initializePage } from "./timer/setup";
+import {
+	tryToLoadUserFromCache,
+	createUserToCache,
+	userConfig,
+} from "./cache/cache";
+import { getUserInfo } from "./connections/twitch";
+import { loadUserFromDb } from "./database/interactions";
 
 const wss = new WebSocket.Server({ port: portWss });
 
@@ -13,53 +18,65 @@ function heartbeat(ws: wsType) {
 	ws.isAlive = true;
 }
 
+// TODO: remove all redundant cache .get() calls
+
 function main() {
 	wss.on("connection", (ws: wsType, req: any) => {
 		ws.isAlive = true;
+		ws.frontInfo = {};
 		ws.on("pong", () => heartbeat(ws));
 
 		var urlParams = url.parse(req.url, true).query;
 
-		var currentUser: currentUserType;
-		var initialUser: initialUser = {
-			page:
-				typeof urlParams["page"] == "string" &&
-				pages.includes(urlParams["page"])
-					? urlParams["page"]
-					: "other",
-			accessToken: urlParams["token"]?.toString() || "",
-		};
+		ws.page =
+			typeof urlParams["page"] == "string" && pages.includes(urlParams["page"])
+				? urlParams["page"]
+				: "other";
 
-		console.log(
-			`New connection from ${initialUser.page}, token: ${initialUser.accessToken}`
-		);
+		var token = urlParams["token"]?.toString() || null;
 
-		login(ws, initialUser).then((res: any) => {
-			if (res == 0) {
-				sendError(ws as any, "invalid token.");
-				return 0;
-			}
+		if (!token) {
+			ws.send("missing token");
+			ws.close();
+			return;
+		}
 
-			currentUser = res;
+		getUserInfo(token)
+			.then((userInfo: any) => {
+				tryToLoadUserFromCache(userInfo.userId)
+					.then((loadedUser: any) => {
+						// logged in and found cached user
+						console.log("found cached user");
 
-			initializePage(currentUser);
-			syncTimer(currentUser);
+						initializePage(ws, loadedUser);
+					})
 
-			ws.on("close", () => {
-				ws.isAlive = false;
-				currentUser.isAlive = false;
-				console.log(`Disconnected from ${ws.name}`);
-				closePage(currentUser);
+					.catch(() => {
+						// not in cache, but logged in
+						console.log("not in cache, but logged in");
+						loadUserFromDb(userInfo.userId)
+							.then((userConfigs: any) => {
+								console.log("loaded user from db:");
+								initializePage(ws, userConfigs);
+								console.log(userConfig.get(userConfigs.userId));
+							})
+							.catch(() => {
+								console.log("not in db, creating new user");
+								createUserToCache(userInfo);
+								initializePage(ws, userInfo);
+							});
+					});
+			})
+
+			.catch((err: any) => {
+				// TODO: handle login error
+				console.log(`failed to login: ${err}`);
 			});
-
-			frontListener(ws, currentUser);
-		});
 	});
 
 	const timeout = setInterval(function ping() {
 		wss.clients.forEach(function each(ws: any) {
 			if (ws.isAlive === false) return ws.terminate();
-
 			ws.isAlive = false;
 			ws.ping();
 		});

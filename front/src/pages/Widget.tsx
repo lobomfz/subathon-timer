@@ -12,11 +12,6 @@ const Widget: React.FC = () => {
 	const [endTime, setEndTime] = useState(0);
 
 	const updateSeconds = (endTime: number) => {
-		console.log(
-			`Force syncing endtime to ${endTime} and seconds to ${
-				endTime - new Date().getTime() / 1000
-			} `
-		);
 		setEndTime(endTime);
 		setSeconds(Math.round(endTime - new Date().getTime() / 1000));
 	};
