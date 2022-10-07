@@ -24,8 +24,8 @@ export async function tryToStartTmi(userId: number) {
 export async function tryToStartStreamlabs(userId: number) {
 	if (!userConfig.has(userId)) return false;
 	var userConfigs = getUserConfigs(userId);
-
-	if (userConfigs.slToken !== undefined && userConfigs.slToken !== null) {
+	// TODO: add a way to disconnect streamlabs
+	if (userConfigs.slToken && !userConfigs.slStatus) {
 		if ("slSocket" in userConfigs) {
 			console.log(`slsocket already started on ${userConfigs.name}`);
 			return false;
