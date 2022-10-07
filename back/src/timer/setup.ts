@@ -1,10 +1,13 @@
-import { currentUserType, userConfigsType, wsType } from "../types";
+import { userConfigsType, wsType } from "../types";
 import { defaultValues } from "../config/userSettings";
-import { syncTimer, syncFromDb } from "../connections/frontend";
+import { syncTimer, tryToSyncTimer } from "../connections/frontend";
 import { tryToStartTmi, tryToStartStreamlabs } from "../cache/listeners";
 import { frontListener } from "../connections/frontend";
+import { pushToDb } from "../database/interactions";
 
 export function initializePage(ws: wsType, userConfigs: userConfigsType) {
+	userConfigs.intervals = {};
+
 	tryToStartTmi(userConfigs.userId);
 
 	tryToStartStreamlabs(userConfigs.userId);
@@ -18,31 +21,26 @@ export function initializePage(ws: wsType, userConfigs: userConfigsType) {
 		defaultValues.forceSync * 1000
 	);
 
-	// switch (currentUser.page) {
-	// 	case "settings":
-	// 		currentUser.intervals.pushToDbInterval = setInterval(
-	// 			() => pushToDb(currentUser),
-	// 			1000
-	// 		);
-	// 		break;
-	// 	case "widget":
-	// 		currentUser.intervals.syncFromDb = setInterval(
-	// 			() => syncFromDb(currentUser),
-	// 			defaultValues.widgetSyncFrequency * 1000
-	// 		);
-	// 		break;
-	// }
+	// TODO: transfer pushToDb function to cache (like tmi)
+	userConfigs.intervals.pushToDb = setInterval(
+		() => pushToDb(userConfigs.userId),
+		1000
+	);
+
+	userConfigs.intervals.tryToSync = setInterval(
+		() => tryToSyncTimer(ws, userConfigs.userId),
+		1000
+	);
+
+	ws.on("close", () => {
+		ws.isAlive = false;
+		closePage(userConfigs);
+	});
 }
 
-export function closePage(currentUser: currentUserType) {
-	clearInterval(currentUser.intervals.forceSync);
-
-	switch (currentUser.page) {
-		case "settings":
-			clearInterval(currentUser.intervals.pushToDbInterval);
-			break;
-		case "widget":
-			clearInterval(currentUser.intervals.syncFromDb);
-			break;
-	}
+export function closePage(userConfigs: userConfigsType) {
+	console.log("closing page");
+	clearInterval(userConfigs.intervals.forceSync);
+	clearInterval(userConfigs.intervals.pushToDb);
+	clearInterval(userConfigs.intervals.tryToSync);
 }

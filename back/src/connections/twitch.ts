@@ -1,25 +1,24 @@
 import axios from "axios";
 import tmi from "tmi.js";
-import { wsType, initialUser, currentUserType } from "../types";
 import { client_id } from "../config/serverSettings";
-import { Users } from "../database/interface";
-import { createUser } from "../database/interactions";
 import { addToEndTime } from "../timer/operations";
-import { userConfig } from "../cache/cache";
+import { getUserConfigs, userConfig } from "../cache/cache";
 
 function addSub(userId: number, plan: string | undefined) {
-	const userSettings = userConfig.get(userId) as currentUserType;
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 
-	if (typeof plan === undefined) return 0;
+	if (typeof plan === undefined) return false;
 	var tier = plan == "Prime" ? 1 : parseInt(plan as string) / 1000;
 
-	addToEndTime(userSettings.userId, tier * userSettings.subTime);
+	return addToEndTime(userConfigs.userId, tier * userConfigs.subTime);
 }
 
 export function addDollar(userId: number, amount: number) {
-	const userSettings = userConfig.get(userId) as currentUserType;
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 
-	addToEndTime(userSettings.userId, amount * userSettings.dollarTime);
+	return addToEndTime(userConfigs.userId, amount * userConfigs.dollarTime);
 }
 
 export function startTMI(name: string, userId: number) {

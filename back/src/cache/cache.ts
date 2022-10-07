@@ -1,22 +1,21 @@
+import { parseCurrentUser } from "../database/interactions";
 import NodeCache from "node-cache";
-import { userConfigsType } from "../types";
+import { userConfigsType } from "types";
 
 export const userConfig = new NodeCache();
 
-export async function tryToLoadUser(userId: number) {
-	// TODO: add postgres
-
+export function tryToLoadUserFromCache(userId: number) {
 	return new Promise(function (resolve, reject) {
-		const user = userConfig.get(userId) as userConfigsType;
-
-		if (user) resolve(user);
+		if (userConfig.has(userId)) resolve(userConfig.get(userId));
 		reject("user not found");
 	});
 }
 
-export async function addUserToCache(userInfo: any) {
-	// TODO: add postgres
+export function getUserConfigs(userId: number) {
+	return userConfig.get(userId) as userConfigsType;
+}
 
+export async function createUserToCache(userInfo: any) {
 	var newUser = {
 		endTime: 0,
 		subTime: 60,
@@ -30,7 +29,8 @@ export async function addUserToCache(userInfo: any) {
 	return userConfig.set(userInfo.userId, userInfo);
 }
 
-export async function updateUserCache(userInfo: any) {
+export function updateUserCache(userInfo: any) {
+	if (!parseCurrentUser(userInfo)) return false;
 	console.log(
 		`updating cache for ${userInfo.name} with ${JSON.stringify(userInfo)}`
 	);
@@ -42,20 +42,14 @@ export async function updateUserConfig(
 	key: string,
 	value: any
 ) {
-	var userConfigs = userConfig.get(userId) as any;
+	if (!userConfig.has(userId)) return false;
+	var userConfigs: any = getUserConfigs(userId); // TODO: remove this any
 
 	userConfigs[key] = value;
 
 	console.log(
 		`updating cache for ${userConfigs.name} with key ${key} and value ${value}`
 	);
+
 	return userConfig.set(userConfigs.userId, userConfigs);
 }
-
-// var success = userConfig.set("2345", () => {
-// 	while (1) {
-// 		console.log("test");
-// 	}
-// });
-//
-// console.log(userConfig.get("2345"));

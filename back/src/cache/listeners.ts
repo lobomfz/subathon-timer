@@ -1,49 +1,44 @@
-import { userConfig, updateUserCache } from "./cache";
+import { userConfig, updateUserCache, getUserConfigs } from "./cache";
 import { startTMI } from "../connections/twitch";
-import { userConfigsType } from "../types";
 import { startStreamlabs } from "../connections/streamlabs";
 
 export async function tryToStartTmi(userId: number) {
-	if (!userConfig.has(userId)) return 0;
-
-	var userConfigs = userConfig.get(userId) as userConfigsType;
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 
 	if (userConfigs !== undefined) {
 		if ("tmi" in userConfigs) {
 			console.log(`tmi already started on ${userConfigs.name}`);
-			return 0;
+			return false;
 		} else {
-			console.log("trying to start listener");
+			console.log("trying to start tmi");
 			userConfigs.tmi = startTMI;
 			userConfigs.tmi(userConfigs.name, userConfigs.userId);
 			updateUserCache(userConfigs);
 
-			return 1;
+			return true;
 		}
 	}
 }
 
 export async function tryToStartStreamlabs(userId: number) {
-	if (!userConfig.has(userId)) return 0;
-
-	var userConfigs = userConfig.get(userId) as userConfigsType;
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 
 	if (userConfigs !== undefined && userConfigs.slToken !== undefined) {
 		if ("slSocket" in userConfigs) {
 			console.log(`slsocket already started on ${userConfigs.name}`);
-			return 0;
+			return false;
 		} else {
-			console.log("trying to start listener");
+			console.log("trying to start streamlabs");
 			userConfigs.slSocket = startStreamlabs;
 			userConfigs.slSocket(
 				userConfigs.userId,
 				userConfigs.slToken,
 				userConfigs.name
 			);
-
 			updateUserCache(userConfigs);
-
-			return 1;
+			return true;
 		}
 	}
 }

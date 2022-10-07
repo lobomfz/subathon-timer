@@ -1,33 +1,21 @@
-import { currentUserType, wsType, userConfigsType } from "../types";
-import { Users } from "../database/interface";
+import { wsType } from "../types";
 import { updateSetting } from "../database/interactions";
 import { setEndTime, addToEndTime } from "../timer/operations";
-import { userConfig } from "../cache/cache";
+import { getUserConfigs, userConfig } from "../cache/cache";
 
-export async function sendError(currentUser: currentUserType, message: string) {
-	currentUser.send(
+export async function sendError(ws: wsType, message: string) {
+	return ws.send(
 		JSON.stringify({
 			error: message,
 		})
 	);
 }
 
-export function syncFromDb(currentUser: currentUserType) {
-	switch (currentUser.page) {
-		case "widget":
-			Users.findByPk(currentUser.userId).then((res: any) => {
-				if (res && currentUser.endTime !== res.dataValues.endTime) {
-					currentUser.endTime = res.dataValues.endTime;
-				}
-			});
-			break;
-	}
-}
-
 export async function syncTimer(ws: wsType, userId: number) {
-	if (!userConfig.has(userId)) return 0;
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 
-	var userConfigs = userConfig.get(userId) as userConfigsType;
+	Object.assign(ws.frontInfo, userConfigs);
 
 	console.log(
 		`trying to send to ${userConfigs.name} on ${ws.page} endtime: ${userConfigs.endTime}`
@@ -42,17 +30,37 @@ export async function syncTimer(ws: wsType, userId: number) {
 			slStatus: userConfigs.slStatus,
 		})
 	);
+	return true;
+}
+
+// checks if frontend is synced, if not, syncs.
+export async function tryToSyncTimer(ws: wsType, userId: number) {
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
+
+	// TODO: add a way to check without having to compare all the values manually
+	if (
+		ws.frontInfo.endTime !== userConfigs.endTime ||
+		ws.frontInfo.dollarTime !== userConfigs.dollarTime ||
+		ws.frontInfo.subTime !== userConfigs.subTime
+	) {
+		console.log("desynced, syncing");
+		return syncTimer(ws, userId);
+	}
+	return false;
 }
 
 export function frontListener(ws: wsType, userId: number) {
+	// TODO: this whole shit
 	ws.onmessage = function (event: any) {
-		var userConfigs = userConfig.get(userId) as userConfigsType;
+		if (!userConfig.has(userId)) return false;
+		var userConfigs = getUserConfigs(userId);
 
 		try {
 			var data = JSON.parse(event.data);
 		} catch (error) {
-			// sendError(ws.send, "json error");
-			return 0;
+			sendError(ws, "json error");
+			return false;
 		}
 		console.log(
 			`received from ${userConfigs.name} on ${ws.page}:`,
@@ -68,7 +76,7 @@ export function frontListener(ws: wsType, userId: number) {
 				//connectStreamlabs(currentUser);
 				break;
 			case "setSetting":
-				// updateSetting(userConfigs, data);
+				updateSetting(userConfigs.userId, data.setting, data.value);
 				break;
 			case "setEndTime":
 				if (data.value) setEndTime(userConfigs.userId, data.value);
