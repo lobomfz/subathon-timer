@@ -25,18 +25,14 @@ export async function tryToStartStreamlabs(userId: number) {
 	if (!userConfig.has(userId)) return false;
 	var userConfigs = getUserConfigs(userId);
 
-	if (userConfigs !== undefined && userConfigs.slToken !== undefined) {
+	if (userConfigs.slToken !== undefined && userConfigs.slToken !== null) {
 		if ("slSocket" in userConfigs) {
 			console.log(`slsocket already started on ${userConfigs.name}`);
 			return false;
 		} else {
 			console.log("trying to start streamlabs");
 			userConfigs.slSocket = startStreamlabs;
-			userConfigs.slSocket(
-				userConfigs.userId,
-				userConfigs.slToken,
-				userConfigs.name
-			);
+			userConfigs.slSocket(userConfigs.userId);
 			updateUserCache(userConfigs);
 			return true;
 		}

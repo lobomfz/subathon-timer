@@ -2,6 +2,7 @@ import { wsType } from "../types";
 import { updateSetting } from "../database/interactions";
 import { setEndTime, addToEndTime } from "../timer/operations";
 import { getUserConfigs, userConfig } from "../cache/cache";
+import { tryToStartStreamlabs } from "../cache/listeners";
 
 export async function sendError(ws: wsType, message: string) {
 	return ws.send(
@@ -42,7 +43,8 @@ export async function tryToSyncTimer(ws: wsType, userId: number) {
 	if (
 		ws.frontInfo.endTime !== userConfigs.endTime ||
 		ws.frontInfo.dollarTime !== userConfigs.dollarTime ||
-		ws.frontInfo.subTime !== userConfigs.subTime
+		ws.frontInfo.subTime !== userConfigs.subTime ||
+		ws.frontInfo.slStatus !== userConfigs.slStatus
 	) {
 		console.log("desynced, syncing");
 		return syncTimer(ws, userId);
@@ -51,7 +53,7 @@ export async function tryToSyncTimer(ws: wsType, userId: number) {
 }
 
 export function frontListener(ws: wsType, userId: number) {
-	// TODO: this whole shit
+	// TODO: finish this
 	ws.onmessage = function (event: any) {
 		if (!userConfig.has(userId)) return false;
 		var userConfigs = getUserConfigs(userId);
@@ -69,11 +71,13 @@ export function frontListener(ws: wsType, userId: number) {
 
 		switch (data.event) {
 			case "getTime":
-				// syncTimer(currentUser);
+				syncTimer(ws, userId);
 				break;
 			case "connectStreamlabs":
-				if (data.slToken.length < 300) userConfigs.slToken = data.slToken;
-				//connectStreamlabs(currentUser);
+				if (data.slToken.length < 300) {
+					updateSetting(userConfigs.userId, "slToken", data.slToken);
+					tryToStartStreamlabs(userConfigs.userId);
+				}
 				break;
 			case "setSetting":
 				updateSetting(userConfigs.userId, data.setting, data.value);
@@ -87,4 +91,7 @@ export function frontListener(ws: wsType, userId: number) {
 		}
 		syncTimer(ws, userId);
 	};
+}
+function connectStreamlabs(currentUser: any) {
+	throw new Error("Function not implemented.");
 }

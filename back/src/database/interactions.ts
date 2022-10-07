@@ -55,6 +55,10 @@ export function updateSetting(userId: number, setting: string, value: any) {
 			console.log(`setting ${userConfigs.name} dollar time to`, value);
 			userConfigs.dollarTime = value;
 			break;
+		case "slToken":
+			console.log(`setting ${userConfigs.name} slToken to`, value);
+			userConfigs.slToken = value;
+			break;
 	}
 
 	return updateUserCache(userConfigs);
