@@ -5,8 +5,7 @@ export const defaultValues = {
 	timeoutTime: 30,
 	widgetSyncFrequency: 1,
 	forceSync: 60,
-	keepAlivePing: 5,
-	sessionTimeout: 30,
-	checkForTimeout: 5,
-	clearCache: 60,
+	keepAlivePing: 30,
+	sessionTimeout: 300,
+	checkForTimeout: 30,
 };
