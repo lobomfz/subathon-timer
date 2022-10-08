@@ -45,10 +45,9 @@ export async function tryToSyncTimer(ws: wsType, userId: number) {
 		ws.frontInfo.dollarTime !== userConfigs.dollarTime ||
 		ws.frontInfo.subTime !== userConfigs.subTime ||
 		ws.frontInfo.slStatus !== userConfigs.slStatus
-	) {
-		console.log("desynced, syncing");
+	)
 		return syncTimer(ws, userId);
-	}
+
 	return false;
 }
 

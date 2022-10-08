@@ -44,27 +44,29 @@ function main() {
 		getUserInfo(token)
 			.then((userInfo: any) => {
 				tryToLoadUserFromCache(userInfo.userId)
-					.then((loadedUser: any) => {
-						// logged in and found cached user
-						console.log("found cached user");
-
-						initializePage(ws, loadedUser);
+					.then(([success, res]: any) => {
+						// if loaded from cache
+						if (success) initializePage(ws, res);
+						// if not in cache:
+						else {
+							// try to load from db
+							loadUserFromDb(userInfo.userId)
+								.then(([success, userConfigs]: any) => {
+									// if loaded from db
+									if (success) initializePage(ws, userConfigs);
+									// if not in db, create new user:
+									else {
+										createUserToCache(userInfo);
+										initializePage(ws, userInfo);
+									}
+								})
+								.catch((err) => {
+									console.log(`error in loadUserFromDb: ${err}`);
+								});
+						}
 					})
-
-					.catch(() => {
-						// not in cache, but logged in
-						console.log("not in cache, but logged in");
-						loadUserFromDb(userInfo.userId)
-							.then((userConfigs: any) => {
-								console.log("loaded user from db:");
-								initializePage(ws, userConfigs);
-								console.log(userConfig.get(userConfigs.userId));
-							})
-							.catch(() => {
-								console.log("not in db, creating new user");
-								createUserToCache(userInfo);
-								initializePage(ws, userInfo);
-							});
+					.catch((err) => {
+						console.log(`error in tryToLoadUserFromCache: ${err}`);
 					});
 			})
 

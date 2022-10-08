@@ -1,13 +1,14 @@
 import { parseCurrentUser } from "../database/interactions";
 import NodeCache from "node-cache";
-import { userConfigsType } from "types";
+import { userConfigsType } from "../types";
 
 export const userConfig = new NodeCache();
 
 export function tryToLoadUserFromCache(userId: number) {
-	return new Promise(function (resolve, reject) {
-		if (userConfig.has(userId)) resolve(userConfig.get(userId));
-		reject("user not found");
+	return new Promise(function (resolve) {
+		if (userConfig.has(userId))
+			resolve([true, userConfig.get(userId) as userConfigsType]);
+		else resolve([false, null]);
 	});
 }
 

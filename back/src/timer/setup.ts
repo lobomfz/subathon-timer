@@ -39,7 +39,6 @@ export function initializePage(ws: wsType, userConfigs: userConfigsType) {
 }
 
 export function closePage(userConfigs: userConfigsType) {
-	console.log("closing page");
 	clearInterval(userConfigs.intervals.forceSync);
 	clearInterval(userConfigs.intervals.pushToDb);
 	clearInterval(userConfigs.intervals.tryToSync);
