@@ -4,11 +4,7 @@ import { wsType } from "./types";
 import { portWss, pages } from "./config/serverSettings";
 import { defaultValues } from "./config/userSettings";
 import { initializePage } from "./timer/setup";
-import {
-	tryToLoadUserFromCache,
-	createUserToCache,
-	userConfig,
-} from "./cache/cache";
+import { tryToLoadUserFromCache, createUserToCache } from "./cache/cache";
 import { getUserInfo } from "./connections/twitch";
 import { loadUserFromDb } from "./database/interactions";
 
@@ -41,19 +37,21 @@ function main() {
 			return;
 		}
 
+		// TODO: make this easier to read
+
 		getUserInfo(token)
 			.then((userInfo: any) => {
 				tryToLoadUserFromCache(userInfo.userId)
-					.then(([success, res]: any) => {
+					.then(([loaded, res]: any) => {
 						// if loaded from cache
-						if (success) initializePage(ws, res);
+						if (loaded) initializePage(ws, res);
 						// if not in cache:
 						else {
 							// try to load from db
 							loadUserFromDb(userInfo.userId)
-								.then(([success, userConfigs]: any) => {
+								.then(([loaded, userConfigs]: any) => {
 									// if loaded from db
-									if (success) initializePage(ws, userConfigs);
+									if (loaded) initializePage(ws, userConfigs);
 									// if not in db, create new user:
 									else {
 										createUserToCache(userInfo);

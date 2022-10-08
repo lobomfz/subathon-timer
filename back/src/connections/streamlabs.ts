@@ -1,14 +1,13 @@
 import io from "socket.io-client";
 import { addDollar } from "./twitch";
 import { userConfig, updateUserConfig, getUserConfigs } from "../cache/cache";
+import { defaultValues } from "../config/userSettings";
 
 export function startStreamlabs(userId: number) {
 	if (!userConfig.has(userId)) return false;
 	var userConfigs = getUserConfigs(userId);
 
 	if (userConfigs.slToken) {
-		console.log(`connecting to ${userConfigs.name} streamlabs`);
-
 		const slSocket = io(
 			`https://sockets.streamlabs.com?token=${userConfigs.slToken}`,
 			{
@@ -16,12 +15,20 @@ export function startStreamlabs(userId: number) {
 			}
 		);
 
+		const isAlive = setInterval(() => {
+			if (!userConfig.has(userId)) {
+				slSocket.disconnect();
+				clearInterval(isAlive);
+			}
+		}, defaultValues.checkForTimeout * 1000);
+
 		slSocket.on("connect", () => {
 			console.log(`connected to ${userConfigs.name} sl`);
 			updateUserConfig(userId, "slStatus", true);
 		});
 
 		slSocket.on("disconnect", () => {
+			console.log(`disconnected from ${userConfigs.name} sl`);
 			updateUserConfig(userId, "slStatus", false);
 		});
 

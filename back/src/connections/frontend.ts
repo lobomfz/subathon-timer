@@ -18,10 +18,6 @@ export async function syncTimer(ws: wsType, userId: number) {
 
 	Object.assign(ws.frontInfo, userConfigs);
 
-	console.log(
-		`trying to send to ${userConfigs.name} on ${ws.page} endtime: ${userConfigs.endTime}`
-	);
-
 	ws.send(
 		JSON.stringify({
 			success: true,
@@ -90,7 +86,4 @@ export function frontListener(ws: wsType, userId: number) {
 		}
 		syncTimer(ws, userId);
 	};
-}
-function connectStreamlabs(currentUser: any) {
-	throw new Error("Function not implemented.");
 }

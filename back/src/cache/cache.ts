@@ -1,6 +1,7 @@
 import { parseCurrentUser } from "../database/interactions";
 import NodeCache from "node-cache";
 import { userConfigsType } from "../types";
+import { currentTime } from "../keepalive/timing";
 
 export const userConfig = new NodeCache();
 
@@ -23,6 +24,10 @@ export async function createUserToCache(userInfo: any) {
 		dollarTime: 15,
 		slStatus: false,
 		intervals: {},
+		isAlive: true,
+		lastPing: currentTime(),
+		tmiAlive: false,
+		slAlive: false,
 	};
 
 	Object.assign(userInfo, newUser);
@@ -32,9 +37,7 @@ export async function createUserToCache(userInfo: any) {
 
 export function updateUserCache(userInfo: any) {
 	if (!parseCurrentUser(userInfo)) return false;
-	console.log(
-		`updating cache for ${userInfo.name} with ${JSON.stringify(userInfo)}`
-	);
+
 	return userConfig.set(userInfo.userId, userInfo);
 }
 
@@ -47,10 +50,14 @@ export async function updateUserConfig(
 	var userConfigs: any = getUserConfigs(userId); // TODO: remove this any
 
 	userConfigs[key] = value;
-
-	console.log(
-		`updating cache for ${userConfigs.name} with key ${key} and value ${value}`
-	);
-
 	return userConfig.set(userConfigs.userId, userConfigs);
+}
+
+export function clearUserCache(userId: number) {
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
+
+	clearInterval(userConfigs.intervals.timeoutChecker);
+	clearInterval(userConfigs.intervals.pushToDb);
+	userConfig.del(userId);
 }

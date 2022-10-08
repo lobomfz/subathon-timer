@@ -2,7 +2,8 @@ import axios from "axios";
 import tmi from "tmi.js";
 import { client_id } from "../config/serverSettings";
 import { addToEndTime } from "../timer/operations";
-import { getUserConfigs, userConfig } from "../cache/cache";
+import { getUserConfigs, updateUserConfig, userConfig } from "../cache/cache";
+import { defaultValues } from "../config/userSettings";
 
 function addSub(userId: number, plan: string | undefined) {
 	if (!userConfig.has(userId)) return false;
@@ -22,7 +23,8 @@ export function addDollar(userId: number, amount: number) {
 }
 
 export function startTMI(name: string, userId: number) {
-	console.log(`Connecting to ${name} tmi`);
+	if (!userConfig.has(userId)) return false;
+	var userConfigs = getUserConfigs(userId);
 	const client = new tmi.Client({
 		connection: {
 			reconnect: true,
@@ -31,6 +33,23 @@ export function startTMI(name: string, userId: number) {
 	});
 
 	client.connect();
+
+	const isAlive = setInterval(() => {
+		if (!userConfig.has(userId)) {
+			client.disconnect();
+			clearInterval(isAlive);
+		}
+	}, defaultValues.checkForTimeout * 1000);
+
+	client.on("connected", () => {
+		console.log(`connected to ${userConfigs.name} tmi`);
+		updateUserConfig(userId, "tmiAlive", true);
+	});
+
+	client.on("disconnected", () => {
+		console.log(`disconnected from ${userConfigs.name} tmi`);
+		updateUserConfig(userId, "tmiAlive", false);
+	});
 
 	client.on(
 		"subgift",

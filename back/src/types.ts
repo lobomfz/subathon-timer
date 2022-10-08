@@ -12,16 +12,13 @@ export interface wsType extends WebSocket {
 	page: string;
 	frontInfo: any;
 	isAlive: boolean;
+	intervals?: any;
 	on: (event: string, listener: (data: any) => void) => void;
-}
-
-export interface initialUser {
-	page: string;
-	accessToken: string;
 }
 
 export interface userConfigsType {
 	tmi?: any;
+	pushToDb?: any;
 	name: string;
 	userId: number;
 	slToken?: string;
@@ -30,5 +27,9 @@ export interface userConfigsType {
 	endTime: number;
 	subTime: number;
 	dollarTime: number;
+	isAlive: boolean;
+	lastPing: number;
+	timeoutChecker?: any;
+	tmiAlive?: boolean;
 	intervals?: any;
 }
