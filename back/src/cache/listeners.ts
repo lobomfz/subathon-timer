@@ -2,7 +2,7 @@ import { userConfig, updateUserCache, getUserConfigs } from "./cache";
 import { startTMI } from "../connections/twitch";
 import { startStreamlabs } from "../connections/streamlabs";
 import { pushToDb } from "../database/interactions";
-import { checkForTimeout } from "../keepalive/timing";
+import { checkForTimeout } from "../timeout/timeout";
 import { defaultValues } from "../config/userSettings";
 
 export async function tryToStartTmi(userId: number) {
@@ -10,7 +10,6 @@ export async function tryToStartTmi(userId: number) {
 	var userConfigs = getUserConfigs(userId);
 
 	if (userConfigs.tmiAlive) {
-		console.log(`tmi already started on ${userConfigs.name}`);
 		return false;
 	} else {
 		console.log("trying to start tmi");

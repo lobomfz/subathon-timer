@@ -8,7 +8,7 @@ import {
 	timeoutChecker,
 } from "../cache/listeners";
 import { frontListener } from "../connections/frontend";
-import { updateLastPing } from "../keepalive/timing";
+import { updateLastPing } from "../timeout/timeout";
 
 export function initializePage(ws: wsType, userConfigs: userConfigsType) {
 	ws.intervals = {};

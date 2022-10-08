@@ -1,7 +1,7 @@
 import { parseCurrentUser } from "../database/interactions";
 import NodeCache from "node-cache";
 import { userConfigsType } from "../types";
-import { currentTime } from "../keepalive/timing";
+import { currentTime } from "../timeout/timeout";
 
 export const userConfig = new NodeCache();
 
