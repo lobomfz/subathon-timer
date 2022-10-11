@@ -79,12 +79,13 @@ export async function loadUserFromDb(userId: number) {
 	return new Promise(function (resolve, reject) {
 		Users.findByPk(userId).then((res: any) => {
 			if (!res) resolve([false, "User not found in db"]);
+			else {
+				var user = res.dataValues as userConfigsType;
+				user.intervals = {};
 
-			var user = res.dataValues as userConfigsType;
-			user.intervals = {};
-
-			if (userConfig.set(user.userId, user)) resolve([true, user]);
-			else reject("error pushing user to cache");
+				if (userConfig.set(user.userId, user)) resolve([true, user]);
+				else reject("error pushing user to cache");
+			}
 		});
 	});
 }
