@@ -6,7 +6,7 @@ import { defaultValues } from "./config/userSettings";
 import { initializePage } from "./timer/setup";
 import { tryToLoadUserFromCache, createUserToCache } from "./cache/cache";
 import { getUserInfo } from "./connections/twitch";
-import { loadUserFromDb } from "./database/interactions";
+import { createUserToDb, loadUserFromDb } from "./database/interactions";
 
 const wss = new WebSocket.Server({ port: portWss });
 
@@ -55,6 +55,7 @@ function main() {
 									// if not in db, create new user:
 									else {
 										createUserToCache(userInfo);
+										createUserToDb(userInfo);
 										initializePage(ws, userInfo);
 									}
 								})

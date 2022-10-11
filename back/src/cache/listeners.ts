@@ -41,7 +41,7 @@ export async function tryToPushToDb(userId: number) {
 	var userConfigs = getUserConfigs(userId);
 
 	if (userConfigs.isAlive) {
-		if ("pushToDb" in userConfigs) {
+		if ("pushToDb" in userConfigs.intervals) {
 			return false;
 		} else {
 			userConfigs.intervals.pushToDb = setInterval(() => {

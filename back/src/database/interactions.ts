@@ -64,14 +64,14 @@ export function updateSetting(userId: number, setting: string, value: any) {
 	return updateUserCache(userConfigs);
 }
 
-export async function createUser(user: user) {
+export async function createUserToDb(userInfo: any) {
 	return Users.create({
-		userId: user.userId,
-		name: user.name,
-		subTime: user.subTime,
-		dollarTime: user.dollarTime,
-		slToken: user.slToken,
-		endTime: user.endTime,
+		userId: userInfo.userId,
+		name: userInfo.name,
+		subTime: 60,
+		dollarTime: 15,
+		slToken: null,
+		endTime: 0,
 	});
 }
 
