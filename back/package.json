@@ -6,7 +6,7 @@
 	"author": "lobomfz",
 	"scripts": {
 		"dev": "npx nodemon -e ts --watch src --exec node --inspect=0.0.0.0:9229 -r ts-node/register src/index.ts",
-		"start": "npx tsc && node build/index.js",
+		"start": "node build/index.js",
 		"migrate": "npx node-pg-migrate up"
 	},
 	"dependencies": {
