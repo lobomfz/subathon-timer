@@ -6,6 +6,6 @@ WORKDIR /home/node/app
 RUN rm -rf node_modules package-lock.json build && chown -R node:node /home/node/app
 USER node
 
-RUN npm install
+RUN npm install && npx tsc
 
 CMD npm start
