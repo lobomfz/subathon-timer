@@ -17,19 +17,15 @@ export interface wsType extends WebSocket {
 }
 
 export interface userConfigsType {
-	tmi?: any;
-	pushToDb?: any;
+	databaseSyncing?: boolean;
+	slStatus: boolean;
+	isAlive: boolean;
+	tmiAlive?: boolean;
+	slToken?: string;
 	name: string;
 	userId: number;
-	slToken?: string;
-	slSocket?: any;
-	slStatus: boolean;
 	endTime: number;
 	subTime: number;
 	dollarTime: number;
-	isAlive: boolean;
 	lastPing: number;
-	timeoutChecker?: any;
-	tmiAlive?: boolean;
-	intervals?: any;
 }

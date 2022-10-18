@@ -1,4 +1,12 @@
-import { userConfig, updateUserCache, getUserConfigs } from "./cache";
+import {
+	updateUserCache,
+	getUserConfigs,
+	userIsInCache,
+	setUserKey,
+	localCache,
+	getLocalCache,
+	updateLocalCache,
+} from "./cache";
 import { startTMI } from "../connections/twitch";
 import { startStreamlabs } from "../connections/streamlabs";
 import { pushToDb } from "../database/interactions";
@@ -6,66 +14,67 @@ import { checkForTimeout } from "../timeout/timeout";
 import { defaultValues } from "../config/userSettings";
 
 export async function tryToStartTmi(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
-	if (userConfigs.tmiAlive) {
-		return false;
-	} else {
+	if (!userConfigs.tmiAlive) {
 		console.log("trying to start tmi");
-		userConfigs.tmi = startTMI;
-		userConfigs.tmi(userConfigs.name, userConfigs.userId);
-		updateUserCache(userConfigs);
+		startTMI(userConfigs.name, userConfigs.userId);
+		setUserKey(userId, "tmiAlive", true);
+		return true;
+	}
 
+	console.log("tmi already started");
+	return false;
+}
+
+export async function tryToStartStreamlabs(userId: number) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
+
+	var localCache = getLocalCache(userId);
+
+	if (userConfigs.slToken && !userConfigs.slStatus) {
+		startStreamlabs(userConfigs.userId);
+		setUserKey(userId, "slStatus", true);
 		return true;
 	}
 }
 
-export async function tryToStartStreamlabs(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
-	if (userConfigs.slToken && !userConfigs.slStatus) {
-		if (userConfigs.slStatus) {
-			return false;
-		} else {
-			userConfigs.slSocket = startStreamlabs;
-			userConfigs.slSocket(userConfigs.userId);
-			updateUserCache(userConfigs);
-			return true;
-		}
-	}
-}
-
 export async function tryToPushToDb(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
+
+	var localCache = getLocalCache(userId);
 
 	if (userConfigs.isAlive) {
-		if ("pushToDb" in userConfigs.intervals) {
+		if ("pushToDb" in localCache) {
 			return false;
 		} else {
-			userConfigs.intervals.pushToDb = setInterval(() => {
+			localCache.pushToDb = setInterval(() => {
 				pushToDb(userConfigs.userId);
 			}, defaultValues.pushFrequency * 1000);
-			updateUserCache(userConfigs);
+			updateLocalCache(userId, localCache);
 			return true;
 		}
 	}
 }
 
 export async function timeoutChecker(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
+
+	var localCache = getLocalCache(userId);
 
 	if (userConfigs) {
 		if ("timeoutChecker" in userConfigs) {
 			return false;
 		} else {
-			userConfigs.intervals.timeoutChecker = setInterval(() => {
+			localCache.timeoutChecker = setInterval(() => {
 				checkForTimeout(userConfigs.userId);
 			}, defaultValues.checkForTimeout * 1000);
 
-			updateUserCache(userConfigs);
+			updateLocalCache(userId, localCache);
 			return true;
 		}
 	}

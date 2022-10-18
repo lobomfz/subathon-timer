@@ -2,8 +2,8 @@ import { defaultValues } from "../config/userSettings";
 import {
 	clearUserCache,
 	getUserConfigs,
-	updateUserConfig,
-	userConfig,
+	setUserKey,
+	userIsInCache,
 } from "../cache/cache";
 
 export function currentTime() {
@@ -11,17 +11,17 @@ export function currentTime() {
 }
 
 export function updateLastPing(userId: number) {
-	updateUserConfig(userId, "isAlive", true);
-	updateUserConfig(userId, "lastPing", currentTime());
+	setUserKey(userId, "isAlive", true);
+	setUserKey(userId, "lastPing", currentTime());
 }
 
-export function checkForTimeout(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+export async function checkForTimeout(userId: number) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	if (currentTime() - userConfigs.lastPing > defaultValues.sessionTimeout) {
 		console.log(`user ${userConfigs.name} timed out`);
-		updateUserConfig(userId, "isAlive", false);
+		setUserKey(userId, "isAlive", false);
 		clearUserCache(userId);
 	}
 }

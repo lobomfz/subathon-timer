@@ -1,20 +1,52 @@
 import { parseCurrentUser } from "../database/interactions";
-import NodeCache from "node-cache";
 import { userConfigsType } from "../types";
+import NodeCache from "node-cache";
 import { currentTime } from "../timeout/timeout";
+import { createClient } from "redis";
 
-export const userConfig = new NodeCache();
+const userClient = createClient({
+	socket: {
+		host: process.env.REDIS_HOST || "redis",
+	},
+});
+
+export const localCache = new NodeCache();
+
+userClient.connect();
+
+userClient.on("error", (error) => {
+	console.error(error);
+});
+
+export function getLocalCache(userId: number) {
+	if (localCache.has(userId)) return localCache.get(userId) as any;
+	else return {};
+}
+
+export function updateLocalCache(userId: number, data: any) {
+	return localCache.set(userId, data);
+}
 
 export function tryToLoadUserFromCache(userId: number) {
-	return new Promise(function (resolve) {
-		if (userConfig.has(userId))
-			resolve([true, userConfig.get(userId) as userConfigsType]);
+	return new Promise(async function (resolve) {
+		if (await userIsInCache(userId))
+			resolve([true, await getUserConfigs(userId)]);
 		else resolve([false, null]);
 	});
 }
 
-export function getUserConfigs(userId: number) {
-	return userConfig.get(userId) as userConfigsType;
+export async function getUserConfigs(userId: number) {
+	const user = (await userClient.get(userId.toString())) as string;
+	return JSON.parse(user) as userConfigsType;
+}
+
+export async function getUserKey(userId: number, key: string) {
+	const user: any = await getUserConfigs(userId);
+	return key in user ? user[key] : false;
+}
+
+export async function userIsInCache(userId: number) {
+	return await userClient.exists(userId.toString());
 }
 
 export async function createUserToCache(userInfo: any) {
@@ -23,7 +55,6 @@ export async function createUserToCache(userInfo: any) {
 		subTime: 60,
 		dollarTime: 15,
 		slStatus: false,
-		intervals: {},
 		isAlive: true,
 		lastPing: currentTime(),
 		tmiAlive: false,
@@ -32,32 +63,30 @@ export async function createUserToCache(userInfo: any) {
 
 	Object.assign(userInfo, newUser);
 
-	return userConfig.set(userInfo.userId, userInfo);
+	return await updateUserCache(userInfo);
 }
 
-export function updateUserCache(userInfo: any) {
+export async function updateUserCache(userInfo: userConfigsType) {
 	if (!parseCurrentUser(userInfo)) return false;
 
-	return userConfig.set(userInfo.userId, userInfo);
+	return await userClient.set(
+		userInfo.userId.toString(),
+		JSON.stringify(userInfo)
+	);
 }
 
-export async function updateUserConfig(
-	userId: number,
-	key: string,
-	value: any
-) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs: any = getUserConfigs(userId); // TODO: remove this any
+export async function setUserKey(userId: number, key: string, value: any) {
+	var userConfigs: any = await getUserConfigs(userId);
 
-	userConfigs[key] = value;
-	return userConfig.set(userConfigs.userId, userConfigs);
+	if (userConfigs) {
+		userConfigs[key] = value;
+		return updateUserCache(userConfigs);
+	}
 }
 
-export function clearUserCache(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
-
-	clearInterval(userConfigs.intervals.timeoutChecker);
-	clearInterval(userConfigs.intervals.pushToDb);
-	userConfig.del(userId);
+export async function clearUserCache(userId: number) {
+	const userConfigs = await getUserConfigs(userId);
+	if (userConfigs) {
+		userClient.del(userId.toString());
+	}
 }

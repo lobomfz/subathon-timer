@@ -1,8 +1,8 @@
-import { userConfig, updateUserConfig, getUserConfigs } from "../cache/cache";
+import { setUserKey, getUserConfigs, userIsInCache } from "../cache/cache";
 
-export function addToEndTime(userId: number, seconds: number | string) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+export async function addToEndTime(userId: number, seconds: number | string) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	if (typeof seconds == "string") seconds = parseInt(seconds) || 0;
 
@@ -15,11 +15,11 @@ export function addToEndTime(userId: number, seconds: number | string) {
 	else userConfigs.endTime = finalTime;
 
 	console.log(`adding ${seconds} to ${userConfigs.name}`);
-	return updateUserConfig(userConfigs.userId, "endTime", userConfigs.endTime);
+	return setUserKey(userConfigs.userId, "endTime", userConfigs.endTime);
 }
 
 export function setEndTime(userId: number, endTime: number) {
-	updateUserConfig(userId, "endTime", endTime);
+	setUserKey(userId, "endTime", endTime);
 }
 
 export function safeValue(value: number) {

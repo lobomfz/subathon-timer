@@ -4,7 +4,11 @@ import { wsType } from "./types";
 import { portWss, pages } from "./config/serverSettings";
 import { defaultValues } from "./config/userSettings";
 import { initializePage } from "./timer/setup";
-import { tryToLoadUserFromCache, createUserToCache } from "./cache/cache";
+import {
+	tryToLoadUserFromCache,
+	createUserToCache,
+	setUserKey,
+} from "./cache/cache";
 import { getUserInfo } from "./connections/twitch";
 import { createUserToDb, loadUserFromDb } from "./database/interactions";
 
@@ -41,6 +45,7 @@ function main() {
 
 		getUserInfo(token)
 			.then((userInfo: any) => {
+				setUserKey(userInfo.userId, "isAlive", true);
 				tryToLoadUserFromCache(userInfo.userId)
 					.then(([loaded, res]: any) => {
 						// if loaded from cache

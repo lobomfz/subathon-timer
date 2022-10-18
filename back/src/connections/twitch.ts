@@ -2,12 +2,12 @@ import axios from "axios";
 import tmi from "tmi.js";
 import { client_id } from "../config/serverSettings";
 import { addToEndTime } from "../timer/operations";
-import { getUserConfigs, updateUserConfig, userConfig } from "../cache/cache";
+import { getUserConfigs, setUserKey, userIsInCache } from "../cache/cache";
 import { defaultValues } from "../config/userSettings";
 
-function addSub(userId: number, plan: string | undefined) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+async function addSub(userId: number, plan: string | undefined) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	if (typeof plan === undefined) return false;
 	var tier = plan == "Prime" ? 1 : parseInt(plan as string) / 1000;
@@ -15,16 +15,16 @@ function addSub(userId: number, plan: string | undefined) {
 	return addToEndTime(userConfigs.userId, tier * userConfigs.subTime);
 }
 
-export function addDollar(userId: number, amount: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+export async function addDollar(userId: number, amount: number) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	return addToEndTime(userConfigs.userId, amount * userConfigs.dollarTime);
 }
 
-export function startTMI(name: string, userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+export async function startTMI(name: string, userId: number) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 	const client = new tmi.Client({
 		connection: {
 			reconnect: true,
@@ -35,7 +35,7 @@ export function startTMI(name: string, userId: number) {
 	client.connect();
 
 	const isAlive = setInterval(() => {
-		if (!userConfig.has(userId)) {
+		if (!userIsInCache(userId)) {
 			client.disconnect();
 			clearInterval(isAlive);
 		}
@@ -43,12 +43,12 @@ export function startTMI(name: string, userId: number) {
 
 	client.on("connected", () => {
 		console.log(`connected to ${userConfigs.name} tmi`);
-		updateUserConfig(userId, "tmiAlive", true);
+		setUserKey(userId, "tmiAlive", true);
 	});
 
 	client.on("disconnected", () => {
 		console.log(`disconnected from ${userConfigs.name} tmi`);
-		updateUserConfig(userId, "tmiAlive", false);
+		setUserKey(userId, "tmiAlive", false);
 	});
 
 	client.on(

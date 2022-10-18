@@ -1,11 +1,11 @@
 import io from "socket.io-client";
 import { addDollar } from "./twitch";
-import { userConfig, updateUserConfig, getUserConfigs } from "../cache/cache";
+import { setUserKey, getUserConfigs, userIsInCache } from "../cache/cache";
 import { defaultValues } from "../config/userSettings";
 
-export function startStreamlabs(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+export async function startStreamlabs(userId: number) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	if (userConfigs.slToken) {
 		const slSocket = io(
@@ -16,7 +16,7 @@ export function startStreamlabs(userId: number) {
 		);
 
 		const isAlive = setInterval(() => {
-			if (!userConfig.has(userId)) {
+			if (!userIsInCache(userId)) {
 				slSocket.disconnect();
 				clearInterval(isAlive);
 			}
@@ -24,12 +24,12 @@ export function startStreamlabs(userId: number) {
 
 		slSocket.on("connect", () => {
 			console.log(`connected to ${userConfigs.name} sl`);
-			updateUserConfig(userId, "slStatus", true);
+			setUserKey(userId, "slStatus", true);
 		});
 
 		slSocket.on("disconnect", () => {
 			console.log(`disconnected from ${userConfigs.name} sl`);
-			updateUserConfig(userId, "slStatus", false);
+			setUserKey(userId, "slStatus", false);
 		});
 
 		slSocket.on("event", (e: any) => {

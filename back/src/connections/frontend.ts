@@ -1,7 +1,7 @@
 import { wsType } from "../types";
 import { updateSetting } from "../database/interactions";
 import { setEndTime, addToEndTime } from "../timer/operations";
-import { getUserConfigs, userConfig } from "../cache/cache";
+import { getUserConfigs, userIsInCache } from "../cache/cache";
 import { tryToStartStreamlabs } from "../cache/listeners";
 
 export async function sendError(ws: wsType, message: string) {
@@ -13,8 +13,8 @@ export async function sendError(ws: wsType, message: string) {
 }
 
 export async function syncTimer(ws: wsType, userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	if (!userIsInCache(userId)) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	Object.assign(ws.frontInfo, userConfigs);
 
@@ -32,8 +32,8 @@ export async function syncTimer(ws: wsType, userId: number) {
 
 // checks if frontend is synced, if not, syncs.
 export async function tryToSyncTimer(ws: wsType, userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	// TODO: add a way to check without having to compare all the values manually
 	if (
@@ -49,9 +49,9 @@ export async function tryToSyncTimer(ws: wsType, userId: number) {
 
 export function frontListener(ws: wsType, userId: number) {
 	// TODO: finish this
-	ws.onmessage = function (event: any) {
-		if (!userConfig.has(userId)) return false;
-		var userConfigs = getUserConfigs(userId);
+	ws.onmessage = async function (event: any) {
+		if (!(await userIsInCache(userId))) return false;
+		var userConfigs = await getUserConfigs(userId);
 
 		try {
 			var data = JSON.parse(event.data);
@@ -59,10 +59,7 @@ export function frontListener(ws: wsType, userId: number) {
 			sendError(ws, "json error");
 			return false;
 		}
-		console.log(
-			`received from ${userConfigs.name} on ${ws.page}:`,
-			JSON.stringify(event.data)
-		);
+		console.log(`received from ${userConfigs.name} on ${ws.page}:`, event.data);
 
 		switch (data.event) {
 			case "getTime":

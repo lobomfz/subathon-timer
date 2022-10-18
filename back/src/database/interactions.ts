@@ -1,7 +1,7 @@
 import { user, userConfigsType } from "../types";
 import { Users } from "./interface";
 import { safeValue } from "../timer/operations";
-import { getUserConfigs, updateUserCache, userConfig } from "../cache/cache";
+import { getUserConfigs, updateUserCache, userIsInCache } from "../cache/cache";
 
 export function parseCurrentUser(userConfigs: userConfigsType) {
 	if (
@@ -22,8 +22,8 @@ export function parseCurrentUser(userConfigs: userConfigsType) {
 }
 
 export async function pushToDb(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	if (parseCurrentUser(userConfigs))
 		return Users.update(
@@ -42,9 +42,13 @@ export async function pushToDb(userId: number) {
 		);
 }
 
-export function updateSetting(userId: number, setting: string, value: any) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+export async function updateSetting(
+	userId: number,
+	setting: string,
+	value: any
+) {
+	if (!(await userIsInCache(userId))) return false;
+	var userConfigs = await getUserConfigs(userId);
 
 	switch (setting) {
 		case "subTime":
@@ -77,13 +81,12 @@ export async function createUserToDb(userInfo: any) {
 
 export async function loadUserFromDb(userId: number) {
 	return new Promise(function (resolve, reject) {
-		Users.findByPk(userId).then((res: any) => {
+		Users.findByPk(userId).then(async (res: any) => {
 			if (!res) resolve([false, "User not found in db"]);
 			else {
 				var user = res.dataValues as userConfigsType;
-				user.intervals = {};
 
-				if (userConfig.set(user.userId, user)) resolve([true, user]);
+				if (await updateUserCache(user)) resolve([true, user]);
 				else reject("error pushing user to cache");
 			}
 		});
