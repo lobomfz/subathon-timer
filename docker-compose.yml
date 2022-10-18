@@ -21,7 +21,7 @@ services:
       - web
     command: ["redis-server", "--appendonly", "no", "--save", ""]
     ports:
-      - "6380:6380"
+      - "6379:6379"
   node:
     restart: always
     depends_on:

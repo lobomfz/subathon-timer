@@ -1,7 +1,12 @@
-import { user, userConfigsType } from "../types";
+import { userConfigsType } from "../types";
 import { Users } from "./interface";
 import { safeValue } from "../timer/operations";
-import { getUserConfigs, updateUserCache, userIsInCache } from "../cache/cache";
+import {
+	getUserConfigs,
+	setUserKey,
+	updateUserCache,
+	userIsInCache,
+} from "../cache/cache";
 
 export function parseCurrentUser(userConfigs: userConfigsType) {
 	if (
@@ -53,15 +58,15 @@ export async function updateSetting(
 	switch (setting) {
 		case "subTime":
 			console.log(`setting ${userConfigs.name} sub time to`, value);
-			userConfigs.subTime = value;
+			setUserKey(userId, "subTime", value);
 			break;
 		case "dollarTime":
 			console.log(`setting ${userConfigs.name} dollar time to`, value);
-			userConfigs.dollarTime = value;
+			setUserKey(userId, "dollarTime", value);
 			break;
 		case "slToken":
 			console.log(`setting ${userConfigs.name} slToken to`, value);
-			userConfigs.slToken = value;
+			setUserKey(userId, "slToken", value);
 			break;
 	}
 
