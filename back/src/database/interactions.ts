@@ -55,17 +55,16 @@ export async function updateSetting(
 	if (!(await userIsInCache(userId))) return false;
 	var userConfigs = await getUserConfigs(userId);
 
+	console.log(`setting ${userConfigs.name} ${setting} to ${value}`);
+
 	switch (setting) {
 		case "subTime":
-			console.log(`setting ${userConfigs.name} sub time to`, value);
 			setUserKey(userId, "subTime", value);
 			break;
 		case "dollarTime":
-			console.log(`setting ${userConfigs.name} dollar time to`, value);
 			setUserKey(userId, "dollarTime", value);
 			break;
 		case "slToken":
-			console.log(`setting ${userConfigs.name} slToken to`, value);
 			setUserKey(userId, "slToken", value);
 			break;
 	}

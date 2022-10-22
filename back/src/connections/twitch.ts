@@ -5,6 +5,8 @@ import { addToEndTime } from "../timer/operations";
 import { getUserConfigs, setUserKey, userIsInCache } from "../cache/cache";
 import { defaultValues } from "../config/userSettings";
 
+// TODO: better way to store tmialive and stuff in redis
+
 async function addSub(userId: number, plan: string | undefined) {
 	if (!(await userIsInCache(userId))) return false;
 	var userConfigs = await getUserConfigs(userId);

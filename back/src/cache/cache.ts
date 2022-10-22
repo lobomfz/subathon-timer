@@ -66,12 +66,12 @@ export async function createUserToCache(userInfo: any) {
 	return await updateUserCache(userInfo);
 }
 
-export async function updateUserCache(userInfo: userConfigsType) {
-	if (!parseCurrentUser(userInfo)) return false;
+export async function updateUserCache(userConfigs: userConfigsType) {
+	if (!parseCurrentUser(userConfigs)) return false;
 
 	return await userClient.set(
-		userInfo.userId.toString(),
-		JSON.stringify(userInfo)
+		userConfigs.userId.toString(),
+		JSON.stringify(userConfigs)
 	);
 }
 
@@ -80,7 +80,8 @@ export async function setUserKey(userId: number, key: string, value: any) {
 
 	if (userConfigs) {
 		userConfigs[key] = value;
-		return updateUserCache(userConfigs);
+		console.log(`setting ${userConfigs.name} ${key} to ${value}`);
+		return await updateUserCache(userConfigs);
 	}
 }
 

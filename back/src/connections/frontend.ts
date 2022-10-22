@@ -49,6 +49,7 @@ export async function tryToSyncTimer(ws: wsType, userId: number) {
 
 export function frontListener(ws: wsType, userId: number) {
 	// TODO: finish this
+	// TODO: sync cache every second to avoid quick desync (setsubtime)
 	ws.onmessage = async function (event: any) {
 		if (!(await userIsInCache(userId))) return false;
 		var userConfigs = await getUserConfigs(userId);
