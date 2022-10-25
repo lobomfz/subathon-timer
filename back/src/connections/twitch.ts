@@ -107,7 +107,7 @@ export async function getUserInfo(accessToken: string) {
 					userId: httpRes.data.data[0].id,
 				});
 			})
-			.catch(function (error) {
+			.catch((error) => {
 				reject(error);
 			});
 	});

@@ -9,3 +9,13 @@ export const defaultValues = {
 	sessionTimeout: 300,
 	checkForTimeout: 30,
 };
+
+export const defaultUser = {
+	endTime: 0,
+	subTime: 60,
+	dollarTime: 15,
+	slStatus: false,
+	intervals: {},
+	tmiAlive: false,
+	slAlive: false,
+};

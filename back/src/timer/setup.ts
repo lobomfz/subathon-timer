@@ -10,35 +10,27 @@ import {
 import { frontListener } from "../connections/frontend";
 import { updateLastPing } from "../timeout/timeout";
 
-export function initializePage(ws: wsType, userConfigs: userConfigsType) {
+export function initializePage(ws: wsType, userId: number) {
 	ws.intervals = {};
 
-	updateLastPing(userConfigs.userId);
+	updateLastPing(userId);
 
-	tryToStartTmi(userConfigs.userId);
+	tryToStartTmi(userId);
 
-	tryToStartStreamlabs(userConfigs.userId);
+	tryToStartStreamlabs(userId);
 
-	tryToPushToDb(userConfigs.userId);
+	tryToPushToDb(userId);
 
-	timeoutChecker(userConfigs.userId);
+	timeoutChecker(userId);
 
-	frontListener(ws, userConfigs.userId);
+	frontListener(ws, userId);
 
-	syncTimer(ws, userConfigs.userId);
+	syncTimer(ws, userId);
 
-	ws.intervals.forceSync = setInterval(
-		() => syncTimer(ws, userConfigs.userId),
-		defaultValues.forceSync * 1000
-	);
-
-	ws.intervals.tryToSync = setInterval(
-		() => tryToSyncTimer(ws, userConfigs.userId),
-		1000
-	);
+	ws.intervals.tryToSync = setInterval(() => tryToSyncTimer(ws, userId), 1000);
 
 	ws.intervals.updatePing = setInterval(
-		() => updateLastPing(userConfigs.userId),
+		() => updateLastPing(userId),
 		defaultValues.keepAlivePing * 1000
 	);
 
@@ -46,6 +38,8 @@ export function initializePage(ws: wsType, userConfigs: userConfigsType) {
 		ws.isAlive = false;
 		closePage(ws);
 	});
+
+	return true;
 }
 
 export function closePage(ws: wsType) {

@@ -1,8 +1,9 @@
 import { wsType } from "../types";
-import { updateSetting } from "../database/interactions";
+import { updateSettings } from "../database/interactions";
 import { setEndTime, addToEndTime } from "../timer/operations";
 import { getUserConfigs, userConfig } from "../cache/cache";
 import { tryToStartStreamlabs } from "../cache/listeners";
+import { wss } from "../index";
 
 export async function sendError(ws: wsType, message: string) {
 	return ws.send(
@@ -10,6 +11,14 @@ export async function sendError(ws: wsType, message: string) {
 			error: message,
 		})
 	);
+}
+
+export async function sendToUser(userId: number, data: any) {
+	wss.clients.forEach(function each(ws: any) {
+		if (ws.userId == userId) {
+			ws.send(data);
+		}
+	});
 }
 
 export async function syncTimer(ws: wsType, userId: number) {
@@ -59,10 +68,7 @@ export function frontListener(ws: wsType, userId: number) {
 			sendError(ws, "json error");
 			return false;
 		}
-		console.log(
-			`received from ${userConfigs.name} on ${ws.page}:`,
-			JSON.stringify(event.data)
-		);
+		console.log(`received from ${userConfigs.name} on ${ws.page}:`, event.data);
 
 		switch (data.event) {
 			case "getTime":
@@ -70,18 +76,14 @@ export function frontListener(ws: wsType, userId: number) {
 				break;
 			case "connectStreamlabs":
 				if (data.slToken.length < 300) {
-					updateSetting(userConfigs.userId, "slToken", data.slToken);
+					updateSettings(userConfigs.userId, data);
 					tryToStartStreamlabs(userConfigs.userId);
 				}
 				break;
-			case "setSetting":
-				updateSetting(userConfigs.userId, data.setting, data.value);
-				break;
+			case "setSettings":
 			case "setEndTime":
-				if (data.value) setEndTime(userConfigs.userId, data.value);
-				break;
 			case "addTime":
-				if (data.value) addToEndTime(userConfigs.userId, data.value);
+				updateSettings(userConfigs.userId, data);
 				break;
 		}
 		syncTimer(ws, userId);

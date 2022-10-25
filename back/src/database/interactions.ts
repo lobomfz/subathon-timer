@@ -1,7 +1,8 @@
-import { user, userConfigsType } from "../types";
+import { user, userConfigsType, wsType } from "../types";
 import { Users } from "./interface";
 import { safeValue } from "../timer/operations";
 import { getUserConfigs, updateUserCache, userConfig } from "../cache/cache";
+import { currentTime } from "../timeout/timeout";
 
 export function parseCurrentUser(userConfigs: userConfigsType) {
 	if (
@@ -23,7 +24,7 @@ export function parseCurrentUser(userConfigs: userConfigsType) {
 
 export async function pushToDb(userId: number) {
 	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	let userConfigs = getUserConfigs(userId);
 
 	if (parseCurrentUser(userConfigs))
 		return Users.update(
@@ -42,32 +43,20 @@ export async function pushToDb(userId: number) {
 		);
 }
 
-export function updateSetting(userId: number, setting: string, value: any) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+export function updateSettings(userId: number, settings: any) {
+	let userConfigs = getUserConfigs(userId) as any;
 
-	switch (setting) {
-		case "subTime":
-			console.log(`setting ${userConfigs.name} sub time to`, value);
-			userConfigs.subTime = value;
-			break;
-		case "dollarTime":
-			console.log(`setting ${userConfigs.name} dollar time to`, value);
-			userConfigs.dollarTime = value;
-			break;
-		case "slToken":
-			console.log(`setting ${userConfigs.name} slToken to`, value);
-			userConfigs.slToken = value;
-			break;
+	for (const [key, value] of Object.entries(settings)) {
+		if (key in userConfigs) userConfigs[key] = value;
 	}
 
 	return updateUserCache(userConfigs);
 }
 
-export async function createUserToDb(userInfo: any) {
+export async function createUserToDb(userId: number, name: string) {
 	return Users.create({
-		userId: userInfo.userId,
-		name: userInfo.name,
+		userId: userId,
+		name: name,
 		subTime: 60,
 		dollarTime: 15,
 		slToken: null,
@@ -76,16 +65,17 @@ export async function createUserToDb(userInfo: any) {
 }
 
 export async function loadUserFromDb(userId: number) {
-	return new Promise(function (resolve, reject) {
+	return new Promise(async function (resolve) {
 		Users.findByPk(userId).then((res: any) => {
-			if (!res) resolve([false, "User not found in db"]);
-			else {
-				var user = res.dataValues as userConfigsType;
-				user.intervals = {};
+			if (res) {
+				let loadedUser = {
+					lastPing: currentTime(),
+					intervals: {},
+				};
 
-				if (userConfig.set(user.userId, user)) resolve([true, user]);
-				else reject("error pushing user to cache");
-			}
+				Object.assign(loadedUser, res.dataValues as userConfigsType);
+				resolve(updateUserCache(loadedUser));
+			} else resolve(false);
 		});
 	});
 }

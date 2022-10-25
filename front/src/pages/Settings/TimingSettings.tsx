@@ -11,7 +11,7 @@ import {
 	Button,
 	SimpleGrid,
 } from "@chakra-ui/react";
-import { setSetting } from "../../Api";
+import { setSettings } from "../../Api";
 
 const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 	ws,
@@ -22,8 +22,7 @@ const TimingSettings: React.FC<{ ws: any; input_settings: any }> = ({
 	const [DollarTime, setDollarTime] = useState(0);
 
 	const pushUpdates = () => {
-		setSetting(ws, "subTime", SubTime);
-		setSetting(ws, "dollarTime", DollarTime);
+		setSettings(ws, { subTime: SubTime, dollarTime: DollarTime });
 	};
 
 	useEffect(() => {

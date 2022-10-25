@@ -1,11 +1,7 @@
-export function setSetting(ws: WebSocket, setting: string, value: number) {
-	ws.send(
-		JSON.stringify({
-			event: "setSetting",
-			setting: setting,
-			value: value,
-		})
-	);
+export function setSettings(ws: WebSocket, settings: any) {
+	settings.event = "setSettings";
+
+	ws.send(JSON.stringify(settings));
 	return 1;
 }
 
