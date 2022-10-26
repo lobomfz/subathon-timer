@@ -16,3 +16,21 @@ export const defaultUser = {
 	tmiAlive: false,
 	slAlive: false,
 };
+
+export const exampleUser: any = [
+	"tmi",
+	"pushToDb",
+	"name",
+	"userId",
+	"slToken",
+	"slSocket",
+	"slStatus",
+	"endTime",
+	"subTime",
+	"dollarTime",
+	"isAlive",
+	"lastPing",
+	"timeoutChecker",
+	"tmiAlive",
+	"intervals",
+];

@@ -30,7 +30,6 @@ export async function sendToUser(userId: number, data: any, backInfo: any) {
 		if (ws.userId == userId) {
 			if (isFrontSynced(ws.frontInfo, data)) return false;
 
-			console.trace("updating sync");
 			Object.assign(ws.frontInfo, backInfo);
 			ws.send(JSON.stringify(data));
 		}

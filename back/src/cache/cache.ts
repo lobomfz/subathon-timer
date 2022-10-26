@@ -4,9 +4,9 @@ import {
 	parseCurrentUser,
 } from "../database/interactions";
 import NodeCache from "node-cache";
-import { userConfigsType, wsType } from "../types";
+import { userConfigsType } from "../types";
 import { currentTime } from "../timeout/timeout";
-import { defaultUser } from "../config/userSettings";
+import { defaultUser, exampleUser } from "../config/userSettings";
 import { syncTimer } from "../connections/frontend";
 
 export const userConfig = new NodeCache();
@@ -26,7 +26,7 @@ export function updateSettings(userId: number, settings: any) {
 	let userConfigs = getUserConfigs(userId) as any;
 
 	for (const [key, value] of Object.entries(settings)) {
-		if (key in userConfigs) userConfigs[key] = value;
+		if (exampleUser.includes(key)) userConfigs[key] = value;
 	}
 
 	return updateUserCache(userConfigs);
@@ -69,6 +69,18 @@ export function updateUserCache(userConfigs: any) {
 	if (userConfig.set(userConfigs.userId, userConfigs)) {
 		return syncTimer(userConfigs.userId);
 	}
+}
+
+export async function forceUpdateUserConfig(
+	userId: number,
+	key: string,
+	value: any
+) {
+	if (!userConfig.has(userId)) return false;
+	var userConfigs: any = getUserConfigs(userId); // TODO: remove this any
+
+	userConfigs[key] = value;
+	return userConfig.set(userConfigs.userId, userConfigs);
 }
 
 export function clearUserCache(userId: number) {
