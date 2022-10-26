@@ -3,12 +3,11 @@ import WebSocket from "ws";
 import { wsType } from "./types";
 import { portWss, pages } from "./config/serverSettings";
 import { defaultValues } from "./config/userSettings";
-import { initializePage } from "./timer/setup";
-import { tryToLoadUserFromCache, createUserToCache } from "./cache/cache";
 import { getUserInfo } from "./connections/twitch";
-import { createUserToDb, loadUserFromDb } from "./database/interactions";
+import { loadUser } from "./cache/cache";
+import { initializePage } from "./timer/setup";
 
-const wss = new WebSocket.Server({ port: portWss });
+export const wss = new WebSocket.Server({ port: portWss });
 
 function heartbeat(ws: wsType) {
 	ws.isAlive = true;
@@ -20,6 +19,8 @@ function main() {
 	wss.on("connection", (ws: wsType, req: any) => {
 		ws.isAlive = true;
 		ws.frontInfo = {};
+		ws.intervals = {};
+
 		ws.on("pong", () => heartbeat(ws));
 
 		var urlParams = url.parse(req.url, true).query;
@@ -37,38 +38,14 @@ function main() {
 			return;
 		}
 
-		// TODO: make this easier to read
-
 		getUserInfo(token)
 			.then((userInfo: any) => {
-				tryToLoadUserFromCache(userInfo.userId)
-					.then(([loaded, res]: any) => {
-						// if loaded from cache
-						if (loaded) initializePage(ws, res);
-						// if not in cache:
-						else {
-							// try to load from db
-							loadUserFromDb(userInfo.userId)
-								.then(([loaded, userConfigs]: any) => {
-									// if loaded from db
-									if (loaded) initializePage(ws, userConfigs);
-									// if not in db, create new user:
-									else {
-										createUserToCache(userInfo);
-										createUserToDb(userInfo);
-										initializePage(ws, userInfo);
-									}
-								})
-								.catch((err) => {
-									console.log(`error in loadUserFromDb: ${err}`);
-								});
-						}
-					})
-					.catch((err) => {
-						console.log(`error in tryToLoadUserFromCache: ${err}`);
-					});
-			})
+				ws.userId = userInfo.userId;
 
+				loadUser(userInfo.userId, userInfo.name).then((success: any) => {
+					if (success) initializePage(ws, userInfo.userId);
+				});
+			})
 			.catch((err: any) => {
 				// TODO: handle login error
 				console.log(`failed to login: ${err}`);

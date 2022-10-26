@@ -9,6 +9,7 @@ export type user = {
 };
 
 export interface wsType extends WebSocket {
+	userId: number;
 	page: string;
 	frontInfo: any;
 	isAlive: boolean;

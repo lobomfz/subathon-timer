@@ -1,12 +1,6 @@
-export function setSetting(ws: WebSocket, setting: string, value: number) {
-	ws.send(
-		JSON.stringify({
-			event: "setSetting",
-			setting: setting,
-			value: value,
-		})
-	);
-	return 1;
+export function setSettings(ws: WebSocket, settings: any) {
+	settings.event = "setSettings";
+	ws.send(JSON.stringify(settings));
 }
 
 export function connectSl(ws: WebSocket, socketToken: string) {
@@ -16,26 +10,20 @@ export function connectSl(ws: WebSocket, socketToken: string) {
 			slToken: socketToken,
 		})
 	);
-	return 1;
 }
 
-export function addTime(ws: WebSocket, seconds: number) {
-	ws.send(
-		JSON.stringify({
-			event: "addTime",
-			value: seconds,
-		})
-	);
-	return 1;
+export function addTime(
+	ws: WebSocket,
+	secondsToAdd: number,
+	currentEndTime: number
+) {
+	const now = Math.trunc(Date.now() / 1000);
+
+	if (currentEndTime < now) currentEndTime = now;
+
+	setEndTime(ws, currentEndTime + secondsToAdd);
 }
 
 export function setEndTime(ws: WebSocket, endTime: number) {
-	console.log("trying to set end time to", endTime);
-	ws.send(
-		JSON.stringify({
-			event: "setEndTime",
-			value: endTime,
-		})
-	);
-	return 1;
+	setSettings(ws, { endTime: endTime });
 }

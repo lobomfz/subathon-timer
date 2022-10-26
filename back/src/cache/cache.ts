@@ -1,9 +1,40 @@
-import { parseCurrentUser } from "../database/interactions";
+import {
+	createUserToDb,
+	loadUserFromDb,
+	parseCurrentUser,
+} from "../database/interactions";
 import NodeCache from "node-cache";
-import { userConfigsType } from "../types";
+import { userConfigsType, wsType } from "../types";
 import { currentTime } from "../timeout/timeout";
+import { defaultUser } from "../config/userSettings";
+import { syncTimer } from "../connections/frontend";
 
 export const userConfig = new NodeCache();
+
+export function loadUser(userId: number, name: string) {
+	return new Promise(function (resolve) {
+		if (isUserInCache(userId)) resolve(true);
+
+		loadUserFromDb(userId).then((success: any) => {
+			if (!success) resolve(createNewUser(userId, name));
+			else resolve(true);
+		});
+	});
+}
+
+export function updateSettings(userId: number, settings: any) {
+	let userConfigs = getUserConfigs(userId) as any;
+
+	for (const [key, value] of Object.entries(settings)) {
+		if (key in userConfigs) userConfigs[key] = value;
+	}
+
+	return updateUserCache(userConfigs);
+}
+
+function isUserInCache(userId: number) {
+	return userConfig.has(userId);
+}
 
 export function tryToLoadUserFromCache(userId: number) {
 	return new Promise(function (resolve) {
@@ -17,40 +48,27 @@ export function getUserConfigs(userId: number) {
 	return userConfig.get(userId) as userConfigsType;
 }
 
-export async function createUserToCache(userInfo: any) {
+export async function createNewUser(userId: number, name: string) {
 	var newUser = {
-		endTime: 0,
-		subTime: 60,
-		dollarTime: 15,
-		slStatus: false,
-		intervals: {},
 		isAlive: true,
 		lastPing: currentTime(),
-		tmiAlive: false,
-		slAlive: false,
+		userId: userId,
+		name: name,
 	};
 
-	Object.assign(userInfo, newUser);
+	Object.assign(newUser, defaultUser);
 
-	return userConfig.set(userInfo.userId, userInfo);
+	createUserToDb(userId, name);
+
+	return userConfig.set(userId, newUser);
 }
 
-export function updateUserCache(userInfo: any) {
-	if (!parseCurrentUser(userInfo)) return false;
+export function updateUserCache(userConfigs: any) {
+	if (!parseCurrentUser(userConfigs)) return false;
 
-	return userConfig.set(userInfo.userId, userInfo);
-}
-
-export async function updateUserConfig(
-	userId: number,
-	key: string,
-	value: any
-) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs: any = getUserConfigs(userId); // TODO: remove this any
-
-	userConfigs[key] = value;
-	return userConfig.set(userConfigs.userId, userConfigs);
+	if (userConfig.set(userConfigs.userId, userConfigs)) {
+		return syncTimer(userConfigs.userId);
+	}
 }
 
 export function clearUserCache(userId: number) {
