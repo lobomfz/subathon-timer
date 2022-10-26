@@ -12,7 +12,7 @@ timer.crt
 timer.key
 build
 tests
-
+.env_prod
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 

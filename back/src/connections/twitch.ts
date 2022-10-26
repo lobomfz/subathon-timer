@@ -78,7 +78,6 @@ export function startTMI(name: string, userId: number) {
 
 	client.on("message", (channel, tags, message, self) => {
 		var mSplit = message.toLowerCase().split(" ");
-		console.log(`message: ${message}`);
 
 		switch (mSplit[0]) {
 			case "!addsub":
