@@ -1,29 +1,18 @@
 version: "3.0"
 services:
-  postgres:
-    image: postgres:14.5-alpine
-    environment:
-      - POSTGRES_PASSWORD=postgres
-    networks:
-      - web
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U postgres"]
-        interval: 5s
-        timeout: 5s
-        retries: 5
-  front:
+  react:
     network_mode: "host"
     restart: always
     build:
       context: .
       dockerfile: prod/Dockerfile_front
+      args:
+        - VITE_WEBSOCKET_URL=${VITE_WEBSOCKET_URL}
+        - VITE_CLIENT_ID=${VITE_CLIENT_ID}
+        - VITE_REDIRECT_URI=${VITE_REDIRECT_URI}
+        - VITE_BASE_URL=${VITE_BASE_URL}
   node:
     restart: always
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       - DB_HOST=${DB_HOST}
       - DB_PASSWORD=${DB_PASSWORD}
