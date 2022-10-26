@@ -1,6 +1,6 @@
-import { userConfigsType, wsType } from "../types";
+import { wsType } from "../types";
 import { defaultValues } from "../config/userSettings";
-import { syncTimer, tryToSyncTimer } from "../connections/frontend";
+import { syncTimer } from "../connections/frontend";
 import {
 	tryToStartTmi,
 	tryToStartStreamlabs,
@@ -11,8 +11,6 @@ import { frontListener } from "../connections/frontend";
 import { updateLastPing } from "../timeout/timeout";
 
 export function initializePage(ws: wsType, userId: number) {
-	ws.intervals = {};
-
 	updateLastPing(userId);
 
 	tryToStartTmi(userId);
@@ -25,9 +23,7 @@ export function initializePage(ws: wsType, userId: number) {
 
 	frontListener(ws, userId);
 
-	syncTimer(ws, userId);
-
-	ws.intervals.tryToSync = setInterval(() => tryToSyncTimer(ws, userId), 1000);
+	syncTimer(userId);
 
 	ws.intervals.updatePing = setInterval(
 		() => updateLastPing(userId),

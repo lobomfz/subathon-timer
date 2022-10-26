@@ -1,4 +1,4 @@
-import { userConfig, updateUserConfig, getUserConfigs } from "../cache/cache";
+import { userConfig, getUserConfigs, updateSettings } from "../cache/cache";
 
 export function addToEndTime(userId: number, seconds: number | string) {
 	if (!userConfig.has(userId)) return false;
@@ -15,11 +15,11 @@ export function addToEndTime(userId: number, seconds: number | string) {
 	else userConfigs.endTime = finalTime;
 
 	console.log(`adding ${seconds} to ${userConfigs.name}`);
-	return updateUserConfig(userConfigs.userId, "endTime", userConfigs.endTime);
+	return updateSettings(userConfigs.userId, { endTime: userConfigs.endTime });
 }
 
 export function setEndTime(userId: number, endTime: number) {
-	updateUserConfig(userId, "endTime", endTime);
+	updateSettings(userId, { endTime: endTime });
 }
 
 export function safeValue(value: number) {

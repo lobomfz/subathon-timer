@@ -1,6 +1,6 @@
 import io from "socket.io-client";
 import { addDollar } from "./twitch";
-import { userConfig, updateUserConfig, getUserConfigs } from "../cache/cache";
+import { userConfig, getUserConfigs, updateSettings } from "../cache/cache";
 import { defaultValues } from "../config/userSettings";
 
 export function startStreamlabs(userId: number) {
@@ -24,12 +24,12 @@ export function startStreamlabs(userId: number) {
 
 		slSocket.on("connect", () => {
 			console.log(`connected to ${userConfigs.name} sl`);
-			updateUserConfig(userId, "slStatus", true);
+			updateSettings(userId, { slStatus: true });
 		});
 
 		slSocket.on("disconnect", () => {
 			console.log(`disconnected from ${userConfigs.name} sl`);
-			updateUserConfig(userId, "slStatus", false);
+			updateSettings(userId, { slStatus: false });
 		});
 
 		slSocket.on("event", (e: any) => {

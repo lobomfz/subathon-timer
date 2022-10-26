@@ -58,15 +58,13 @@ export async function timeoutChecker(userId: number) {
 	var userConfigs = getUserConfigs(userId);
 
 	if (userConfigs) {
-		if ("timeoutChecker" in userConfigs) {
-			return false;
-		} else {
-			userConfigs.intervals.timeoutChecker = setInterval(() => {
-				checkForTimeout(userConfigs.userId);
-			}, defaultValues.checkForTimeout * 1000);
+		if ("timeoutChecker" in userConfigs.intervals) return false;
 
-			updateUserCache(userConfigs);
-			return true;
-		}
+		userConfigs.intervals.timeoutChecker = setInterval(() => {
+			checkForTimeout(userConfigs.userId);
+		}, defaultValues.checkForTimeout * 1000);
+
+		updateUserCache(userConfigs);
+		return true;
 	}
 }

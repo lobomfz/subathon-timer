@@ -1,7 +1,5 @@
 import { wsType } from "../types";
-import { updateSettings } from "../database/interactions";
-import { setEndTime, addToEndTime } from "../timer/operations";
-import { getUserConfigs, userConfig } from "../cache/cache";
+import { getUserConfigs, updateSettings, userConfig } from "../cache/cache";
 import { tryToStartStreamlabs } from "../cache/listeners";
 import { wss } from "../index";
 
@@ -13,51 +11,52 @@ export async function sendError(ws: wsType, message: string) {
 	);
 }
 
-export async function sendToUser(userId: number, data: any) {
+export function isFrontSynced(frontInfo: any, backInfo: any) {
+	if (!("endTime" in frontInfo)) return false;
+
+	// this avoids sending irrelevant data to front but it's still called a lot, so
+	// TODO: reduce redundant calls (mainly on user login)
+
+	for (const [key, value] of Object.entries(frontInfo)) {
+		if (key in backInfo && backInfo[key] != value) {
+			return false;
+		}
+	}
+	return true;
+}
+
+export async function sendToUser(userId: number, data: any, backInfo: any) {
 	wss.clients.forEach(function each(ws: any) {
 		if (ws.userId == userId) {
-			ws.send(data);
+			if (isFrontSynced(ws.frontInfo, data)) return false;
+
+			console.trace("updating sync");
+			Object.assign(ws.frontInfo, backInfo);
+			ws.send(JSON.stringify(data));
 		}
 	});
 }
 
-export async function syncTimer(ws: wsType, userId: number) {
+export async function syncTimer(userId: number) {
 	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
+	let userConfigs = getUserConfigs(userId);
 
-	Object.assign(ws.frontInfo, userConfigs);
-
-	ws.send(
-		JSON.stringify({
+	sendToUser(
+		userId,
+		{
 			success: true,
 			endTime: userConfigs.endTime,
 			subTime: userConfigs.subTime,
 			dollarTime: userConfigs.dollarTime,
 			slStatus: userConfigs.slStatus,
-		})
+		},
+		userConfigs
 	);
+
 	return true;
 }
 
-// checks if frontend is synced, if not, syncs.
-export async function tryToSyncTimer(ws: wsType, userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
-
-	// TODO: add a way to check without having to compare all the values manually
-	if (
-		ws.frontInfo.endTime !== userConfigs.endTime ||
-		ws.frontInfo.dollarTime !== userConfigs.dollarTime ||
-		ws.frontInfo.subTime !== userConfigs.subTime ||
-		ws.frontInfo.slStatus !== userConfigs.slStatus
-	)
-		return syncTimer(ws, userId);
-
-	return false;
-}
-
 export function frontListener(ws: wsType, userId: number) {
-	// TODO: finish this
 	ws.onmessage = function (event: any) {
 		if (!userConfig.has(userId)) return false;
 		var userConfigs = getUserConfigs(userId);
@@ -72,7 +71,7 @@ export function frontListener(ws: wsType, userId: number) {
 
 		switch (data.event) {
 			case "getTime":
-				syncTimer(ws, userId);
+				syncTimer(userId);
 				break;
 			case "connectStreamlabs":
 				if (data.slToken.length < 300) {
@@ -82,10 +81,8 @@ export function frontListener(ws: wsType, userId: number) {
 				break;
 			case "setSettings":
 			case "setEndTime":
-			case "addTime":
 				updateSettings(userConfigs.userId, data);
 				break;
 		}
-		syncTimer(ws, userId);
 	};
 }

@@ -1,6 +1,6 @@
 import url from "url";
 import WebSocket from "ws";
-import { userConfigsType, wsType } from "./types";
+import { wsType } from "./types";
 import { portWss, pages } from "./config/serverSettings";
 import { defaultValues } from "./config/userSettings";
 import { getUserInfo } from "./connections/twitch";
@@ -19,6 +19,8 @@ function main() {
 	wss.on("connection", (ws: wsType, req: any) => {
 		ws.isAlive = true;
 		ws.frontInfo = {};
+		ws.intervals = {};
+
 		ws.on("pong", () => heartbeat(ws));
 
 		var urlParams = url.parse(req.url, true).query;

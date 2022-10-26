@@ -2,7 +2,7 @@ import axios from "axios";
 import tmi from "tmi.js";
 import { client_id } from "../config/serverSettings";
 import { addToEndTime } from "../timer/operations";
-import { getUserConfigs, updateUserConfig, userConfig } from "../cache/cache";
+import { getUserConfigs, updateSettings, userConfig } from "../cache/cache";
 import { defaultValues } from "../config/userSettings";
 
 function addSub(userId: number, plan: string | undefined) {
@@ -43,12 +43,12 @@ export function startTMI(name: string, userId: number) {
 
 	client.on("connected", () => {
 		console.log(`connected to ${userConfigs.name} tmi`);
-		updateUserConfig(userId, "tmiAlive", true);
+		updateSettings(userId, { tmiAlive: true });
 	});
 
 	client.on("disconnected", () => {
 		console.log(`disconnected from ${userConfigs.name} tmi`);
-		updateUserConfig(userId, "tmiAlive", false);
+		updateSettings(userId, { tmiAlive: false });
 	});
 
 	client.on(

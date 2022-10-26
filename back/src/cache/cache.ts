@@ -6,8 +6,8 @@ import {
 import NodeCache from "node-cache";
 import { userConfigsType, wsType } from "../types";
 import { currentTime } from "../timeout/timeout";
-import { initializePage } from "../timer/setup";
 import { defaultUser } from "../config/userSettings";
+import { syncTimer } from "../connections/frontend";
 
 export const userConfig = new NodeCache();
 
@@ -20,6 +20,16 @@ export function loadUser(userId: number, name: string) {
 			else resolve(true);
 		});
 	});
+}
+
+export function updateSettings(userId: number, settings: any) {
+	let userConfigs = getUserConfigs(userId) as any;
+
+	for (const [key, value] of Object.entries(settings)) {
+		if (key in userConfigs) userConfigs[key] = value;
+	}
+
+	return updateUserCache(userConfigs);
 }
 
 function isUserInCache(userId: number) {
@@ -40,6 +50,7 @@ export function getUserConfigs(userId: number) {
 
 export async function createNewUser(userId: number, name: string) {
 	var newUser = {
+		isAlive: true,
 		lastPing: currentTime(),
 		userId: userId,
 		name: name,
@@ -52,22 +63,12 @@ export async function createNewUser(userId: number, name: string) {
 	return userConfig.set(userId, newUser);
 }
 
-export function updateUserCache(user: any) {
-	if (!parseCurrentUser(user)) return false;
+export function updateUserCache(userConfigs: any) {
+	if (!parseCurrentUser(userConfigs)) return false;
 
-	return userConfig.set(user.userId, user);
-}
-
-export async function updateUserConfig(
-	userId: number,
-	key: string,
-	value: any
-) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs: any = getUserConfigs(userId); // TODO: remove this any
-
-	userConfigs[key] = value;
-	return userConfig.set(userConfigs.userId, userConfigs);
+	if (userConfig.set(userConfigs.userId, userConfigs)) {
+		return syncTimer(userConfigs.userId);
+	}
 }
 
 export function clearUserCache(userId: number) {

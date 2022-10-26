@@ -1,4 +1,4 @@
-import { user, userConfigsType, wsType } from "../types";
+import { userConfigsType } from "../types";
 import { Users } from "./interface";
 import { safeValue } from "../timer/operations";
 import { getUserConfigs, updateUserCache, userConfig } from "../cache/cache";
@@ -43,24 +43,18 @@ export async function pushToDb(userId: number) {
 		);
 }
 
-export function updateSettings(userId: number, settings: any) {
-	let userConfigs = getUserConfigs(userId) as any;
-
-	for (const [key, value] of Object.entries(settings)) {
-		if (key in userConfigs) userConfigs[key] = value;
-	}
-
-	return updateUserCache(userConfigs);
-}
-
 export async function createUserToDb(userId: number, name: string) {
-	return Users.create({
-		userId: userId,
-		name: name,
-		subTime: 60,
-		dollarTime: 15,
-		slToken: null,
-		endTime: 0,
+	console.trace(`creating user ${name} to db`);
+	Users.findByPk(userId).then((res: any) => {
+		if (!res)
+			Users.create({
+				userId: userId,
+				name: name,
+				subTime: 60,
+				dollarTime: 15,
+				slToken: null,
+				endTime: 0,
+			});
 	});
 }
 
@@ -70,6 +64,7 @@ export async function loadUserFromDb(userId: number) {
 			if (res) {
 				let loadedUser = {
 					lastPing: currentTime(),
+					isAlive: true,
 					intervals: {},
 				};
 
