@@ -1,4 +1,4 @@
-# [Subathon Timer](https://timer.lobomfz.com/) (Name TBD)
+# [Subathon Timer](https://subathon-timer.app)
 
 ## Open source alternative to [Marathon Timer](https://marathontimer.herokuapp.com/), currently on beta stage, most features are not implemented yet, but core functionality is working.
 
