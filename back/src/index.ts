@@ -13,6 +13,8 @@ function heartbeat(ws: wsType) {
 	ws.isAlive = true;
 }
 
+export let userConfigs: any = {};
+
 // TODO: remove all redundant cache .get() calls
 
 function main() {
@@ -20,6 +22,8 @@ function main() {
 		ws.isAlive = true;
 		ws.frontInfo = {};
 		ws.intervals = {};
+
+		console.log("new connection");
 
 		ws.on("pong", () => heartbeat(ws));
 
@@ -41,7 +45,6 @@ function main() {
 		getUserInfo(token)
 			.then((userInfo: any) => {
 				ws.userId = userInfo.userId;
-
 				loadUser(userInfo.userId, userInfo.name).then((success: any) => {
 					if (success) initializePage(ws, userInfo.userId);
 				});

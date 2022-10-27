@@ -2,29 +2,23 @@ import axios from "axios";
 import tmi from "tmi.js";
 import { client_id } from "../config/serverSettings";
 import { addToEndTime } from "../timer/operations";
-import { getUserConfigs, updateSettings, userConfig } from "../cache/cache";
+import { updateSettings } from "../cache/cache";
 import { defaultValues } from "../config/userSettings";
+import { userConfigs } from "../index";
+import { currentTime } from "../timeout/timeout";
 
 function addSub(userId: number, plan: string | undefined) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
-
-	if (typeof plan === undefined) return false;
+	if (!plan) return false;
 	var tier = plan == "Prime" ? 1 : parseInt(plan as string) / 1000;
 
-	return addToEndTime(userConfigs.userId, tier * userConfigs.subTime);
+	return addToEndTime(userId, tier * userConfigs[userId].subTime);
 }
 
 export function addDollar(userId: number, amount: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
-
-	return addToEndTime(userConfigs.userId, amount * userConfigs.dollarTime);
+	return addToEndTime(userId, amount * userConfigs[userId].dollarTime);
 }
 
 export function startTMI(name: string, userId: number) {
-	if (!userConfig.has(userId)) return false;
-	var userConfigs = getUserConfigs(userId);
 	const client = new tmi.Client({
 		connection: {
 			reconnect: true,
@@ -35,20 +29,20 @@ export function startTMI(name: string, userId: number) {
 	client.connect();
 
 	const isAlive = setInterval(() => {
-		if (!userConfig.has(userId)) {
+		if (!(userId in userConfigs)) {
 			client.disconnect();
 			clearInterval(isAlive);
 		}
 	}, defaultValues.checkForTimeout * 1000);
 
 	client.on("connected", () => {
-		console.log(`connected to ${userConfigs.name} tmi`);
+		console.log(`connected to ${userConfigs[userId].name} tmi`);
 		updateSettings(userId, { tmiAlive: true });
 	});
 
 	client.on("disconnected", () => {
-		console.log(`disconnected from ${userConfigs.name} tmi`);
-		updateSettings(userId, { tmiAlive: false });
+		console.log(`disconnected from ${userConfigs[userId].name} tmi`);
+		updateSettings(userId, { tmiAlive: false, connectingToTmi: false });
 	});
 
 	client.on(

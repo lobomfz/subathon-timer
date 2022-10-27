@@ -1,8 +1,8 @@
 import { userConfigsType } from "../types";
 import { Users } from "./interface";
 import { safeValue } from "../timer/operations";
-import { getUserConfigs, updateUserCache, userConfig } from "../cache/cache";
 import { currentTime } from "../timeout/timeout";
+import { userConfigs } from "../index";
 
 export function parseCurrentUser(userConfigs: userConfigsType) {
 	if (
@@ -23,21 +23,18 @@ export function parseCurrentUser(userConfigs: userConfigsType) {
 }
 
 export async function pushToDb(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	let userConfigs = getUserConfigs(userId);
-
-	if (parseCurrentUser(userConfigs))
+	if (parseCurrentUser(userConfigs[userId]))
 		return Users.update(
 			{
-				name: userConfigs.name,
-				subTime: Math.floor(userConfigs.subTime),
-				dollarTime: Math.floor(userConfigs.dollarTime),
-				slToken: userConfigs.slToken,
-				endTime: Math.floor(userConfigs.endTime),
+				name: userConfigs[userId].name,
+				subTime: Math.floor(userConfigs[userId].subTime),
+				dollarTime: Math.floor(userConfigs[userId].dollarTime),
+				slToken: userConfigs[userId].slToken,
+				endTime: Math.floor(userConfigs[userId].endTime),
 			},
 			{
 				where: {
-					userId: userConfigs.userId,
+					userId: userConfigs[userId].userId,
 				},
 			}
 		);
@@ -62,14 +59,9 @@ export async function loadUserFromDb(userId: number) {
 	return new Promise(async function (resolve) {
 		Users.findByPk(userId).then((res: any) => {
 			if (res) {
-				let loadedUser = {
-					lastPing: currentTime(),
-					isAlive: true,
-					intervals: {},
-				};
-
-				Object.assign(loadedUser, res.dataValues as userConfigsType);
-				resolve(updateUserCache(loadedUser));
+				resolve(
+					Object.assign(userConfigs[userId], res.dataValues as userConfigsType)
+				);
 			} else resolve(false);
 		});
 	});

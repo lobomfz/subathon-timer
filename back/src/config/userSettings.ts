@@ -4,7 +4,6 @@ export const defaultValues = {
 	keepAlivePing: 30,
 	sessionTimeout: 300,
 	checkForTimeout: 30,
-	syncTimerTimeout: 3,
 };
 
 export const defaultUser = {
@@ -33,4 +32,6 @@ export const exampleUser: any = [
 	"timeoutChecker",
 	"tmiAlive",
 	"intervals",
+	"connectingToSl",
+	"connectingToTmi",
 ];

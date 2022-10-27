@@ -1,7 +1,7 @@
 import { wsType } from "../types";
-import { getUserConfigs, updateSettings, userConfig } from "../cache/cache";
+import { updateSettings } from "../cache/cache";
 import { tryToStartStreamlabs } from "../cache/listeners";
-import { wss } from "../index";
+import { userConfigs, wss } from "../index";
 
 export async function sendError(ws: wsType, message: string) {
 	return ws.send(
@@ -37,19 +37,16 @@ export async function sendToUser(userId: number, data: any, backInfo: any) {
 }
 
 export async function syncTimer(userId: number) {
-	if (!userConfig.has(userId)) return false;
-	let userConfigs = getUserConfigs(userId);
-
 	sendToUser(
 		userId,
 		{
 			success: true,
-			endTime: userConfigs.endTime,
-			subTime: userConfigs.subTime,
-			dollarTime: userConfigs.dollarTime,
-			slStatus: userConfigs.slStatus,
+			endTime: userConfigs[userId].endTime,
+			subTime: userConfigs[userId].subTime,
+			dollarTime: userConfigs[userId].dollarTime,
+			slStatus: userConfigs[userId].slStatus,
 		},
-		userConfigs
+		userConfigs[userId]
 	);
 
 	return true;
@@ -57,16 +54,16 @@ export async function syncTimer(userId: number) {
 
 export function frontListener(ws: wsType, userId: number) {
 	ws.onmessage = function (event: any) {
-		if (!userConfig.has(userId)) return false;
-		var userConfigs = getUserConfigs(userId);
-
 		try {
 			var data = JSON.parse(event.data);
 		} catch (error) {
 			sendError(ws, "json error");
 			return false;
 		}
-		console.log(`received from ${userConfigs.name} on ${ws.page}:`, event.data);
+		console.log(
+			`received from ${userConfigs[userId].name} on ${ws.page}:`,
+			event.data
+		);
 
 		switch (data.event) {
 			case "getTime":
@@ -74,13 +71,13 @@ export function frontListener(ws: wsType, userId: number) {
 				break;
 			case "connectStreamlabs":
 				if (data.slToken.length < 300) {
-					updateSettings(userConfigs.userId, data);
-					tryToStartStreamlabs(userConfigs.userId);
+					updateSettings(userId, data);
+					tryToStartStreamlabs(userId);
 				}
 				break;
 			case "setSettings":
 			case "setEndTime":
-				updateSettings(userConfigs.userId, data);
+				updateSettings(userId, data);
 				break;
 		}
 	};
