@@ -48,4 +48,6 @@ export async function createNewUser(userId: number, name: string) {
 	return Object.assign(userConfigs[userId], defaultUser);
 }
 
-export function clearUserCache(userId: number) {}
+export function clearUserCache(userId: number) {
+	delete userConfigs[userId];
+}

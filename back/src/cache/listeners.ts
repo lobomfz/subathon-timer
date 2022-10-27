@@ -16,7 +16,7 @@ export async function tryToStartTmi(userId: number) {
 }
 
 export async function tryToStartStreamlabs(userId: number) {
-	if ("slToken" in userConfigs[userId]) {
+	if ("slToken" in userConfigs[userId] && userConfigs[userId].slToken) {
 		if (userConfigs[userId].slStatus || userConfigs[userId].connectingToSl) {
 			return false;
 		} else {
